@@ -1,0 +1,3 @@
+[submodule "vendor/bgfx"]
+	path = vendor/bgfx
+	url = git@github.com:slowgames/bgfx.cmake
