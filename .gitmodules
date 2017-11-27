@@ -1,3 +1,6 @@
 [submodule "vendor/bgfx"]
 	path = vendor/bgfx
 	url = git@github.com:slowgames/bgfx.cmake
+[submodule "vendor/ozz-animation"]
+	path = vendor/ozz-animation
+	url = git://github.com/guillaumeblanc/ozz-animation.git

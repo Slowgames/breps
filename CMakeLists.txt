@@ -5,3 +5,4 @@ project(breps)
 add_subdirectory(vendor)
 
 #
+add_subdirectory(hello)
