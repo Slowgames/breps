@@ -1,0 +1,75 @@
+
+* Talk Outline
+** Define B-Rep
+   Boundary representations (aka b-reps).
+*** It's more than a graphical tool
+    Procedural modeling doesn't always mean generating renderable geometry, though they are often related.
+*** Some common uses / applications
+**** Convex hulls
+**** Navigation meshes
+**** Finite element simulation
+**** Robotics
+*** Some commonly known b-rep data structures
+**** Winged edge
+**** "triangle data structure"
+     http://sandervanrossen.blogspot.de/2017/09/half-edge-data-structure-considered.html
+**** Half-edge Mesh
+*** Principle vocabulary
+**** Boundary edges
+     Edges with no neighbor
+**** Regular edges
+     Edges with one neighbor
+**** Singular edges
+     Edges with 2 or more neighbors
+**** Closed mesh
+     A mesh with no boundary edges
+**** Manifold mesh
+     A mesh with no singular edges
+** Introduce basic halfedge data structure
+   It seems to be the defacto standard mesh representation.
+*** Discus some of the challenges
+**** Identify tradeoffs with complexity and flexibility
+     For example, constraining the kinds mesh you can represent might allow you to simplify your implementation or reduce certain edge cases.
+*** Considerations
+*** Pointers or Indices?
+    Is it worth the trouble to use shared/weak pointers, raw pointers (no!)? Best to use indices, but how can we make indices typesafe easily? What are some ways to reuse memory and reduce fragmentation?
+*** Typesafe design ideas
+**** C++? Rust?
+     Using `std::vector` and `Vec` for you data buffers and typesafe indexes. Identify Rusts unique constraints in regards to reference semantics. Mention why that's a good idea (multi-threaded mesh processing).
+**** Java? C#? Kotlin? Go?
+     What do you have to look out for if you're working in a garbage collected language? Should you still use typesafe indices or can you just go wild with the heap?
+**** Scala?
+     What sort of design might you use with nice immutable data structures?
+**** Haskell/Eta-lang?
+     Time and braincells permitting, mention the interesting case of circular data structures and Haskells lazy evaluation.
+*** Thoughts on extremely optimized/specialized implementations
+    http://dtecta.com/files/GDC17_VanDenBergen_Gino_Brep_Triangle_Meshes.pdf
+    If your mesh is restricted to closed manifold polyhedra and specifically triangles, this is a very tight variation of the halfedge mesh data structure. Really fascinating observations and design.
+*** Links to existing implementations
+**** www.openmesh.org
+** Working with meshes
+   What does it look like to generate and traverse meshes? What do we have to keep in mind when modifying them?
+*** Fluent traversals
+    If you're using indices and not pointers you'll want to build a traversal api to walk the mesh naturally.
+**** Proxy objects or just return `*this` or `&self`?
+***** In some ways this boils down to a question of traversals being immutable or not.
+***** In multi-threaded environments you have to consider state changes.
+***** Proxy objects should probably be short-lived.
+      Kept on the stack in order to avoid problems with internal references going out of scope.
+*** Iterators and Circulators
+    As an alternative to manual traversals of the mesh we can use special iterators and circulators to visit key topology.
+**** Iterate over faces following edge connectivity
+**** Iterate over vertices following edge connectivity
+**** Iterate over the edges of a single face
+**** Iterate over the vertices of a single face
+**** Circulate around the edges of a vertex
+**** Circulate around the faces of a vertex
+**** Circulate around teh faces of an edge
+     That should include faces reachable only via the vertices of the edge. So in a cube circulating the faces of any edge should visit 4 faces out of 6.
+** Common operations
+*** Calculate area of face/polyon
+*** Calculate face normal
+*** Calculate vertex normal
+*** Add face
+*** Rotate edge
+* Demo Plans

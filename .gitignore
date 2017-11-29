@@ -3,3 +3,4 @@ TAGS
 .build/
 build/
 vendor/bgfx/bgfx/examples/runtime/
+logs/
