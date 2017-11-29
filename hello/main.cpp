@@ -16,6 +16,9 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	undef None
 #endif // defined(None)
 
+#include <easylogging++.h>
+INITIALIZE_EASYLOGGINGPP
+
 namespace sdl2 {
 
 
@@ -36,6 +39,7 @@ enum class result_t {
 
 result_t init_bgfx(bgfx::RendererType::Enum renderer_type, sdl2::window_ptr_t& window)
 {
+  LOG(INFO) << "Initializing bgfx for use with SDL2";
   result_t result = result_t::OK;
 
   int width, height;
@@ -63,7 +67,7 @@ result_t init_bgfx(bgfx::RendererType::Enum renderer_type, sdl2::window_ptr_t& w
   bgfx::setPlatformData(platform_data);
 
   if (!bgfx::init(bgfx::RendererType::OpenGL)) {
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to initialize bgfx!");
+    LOG(ERROR) << "Failed to initialize bgfx!";
     result = result_t::ERR;
   }
   else {
@@ -97,9 +101,10 @@ result_t run() {
   result_t status = result_t::OK;
 
   uint32_t width = 1280, height = 720;
+  LOG(INFO) << "Creating window " << width << "x" << height;
   auto window = sdl2::make_window(width, height);
   if (!window) {
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to create window! %s", SDL_GetError);
+    LOG(ERROR) << "Unable to create window! " << SDL_GetError();
     status = result_t::ERR;
   }
   else {
@@ -132,15 +137,20 @@ result_t run() {
 
 int main(int argc, char* argv[])
 {
+  START_EASYLOGGINGPP(argc, argv);
   result_t result = result_t::OK;
+
+  LOG(INFO) << "Howdy!";
 
   auto init_flags = SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO;
   if (SDL_Init(init_flags) != 0) {
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to initialize SDL: %s", SDL_GetError());
+    LOG(ERROR) << "Unable to initialize SDL: " << SDL_GetError();
     result = result_t::ERR;
   }
   else {
+    LOG(INFO) << "SDL2 Initialization successful.";
     result = run();
+    LOG(INFO) << "Exiting...";
     SDL_Quit();
   }
 

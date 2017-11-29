@@ -3,6 +3,8 @@
 #include "bgfx_util.h"
 #include "sdl2_util.h"
 
+#include "easylogging++.h"
+
 #include <bx/os.h>
 
 BX_PRAGMA_DIAGNOSTIC_PUSH()
@@ -21,6 +23,8 @@ namespace bgfx_util {
 
 result_t init(bgfx::RendererType::Enum renderer_type, sdl2::window_ptr_t& window)
 {
+  LOG(INFO) << "Initializing bgfx";
+
   result_t result = result_t::OK;
 
   int width, height;
@@ -36,10 +40,12 @@ result_t init(bgfx::RendererType::Enum renderer_type, sdl2::window_ptr_t& window
   platform_data.backBufferDS = nullptr;
   switch(info.subsystem) {
     case SDL_SYSWM_WINDOWS: {
+      LOG(DEBUG) << "bgfx platform is windows.";
       platform_data.ndt = nullptr;
       platform_data.nwh = info.info.win.window;
     } break;
     default: {
+      LOG(WARN) << "Unsupported platform! We're probably going to crash!";
       platform_data.ndt = nullptr;
       platform_data.nwh = nullptr;
     } break;
@@ -47,11 +53,12 @@ result_t init(bgfx::RendererType::Enum renderer_type, sdl2::window_ptr_t& window
 
   bgfx::setPlatformData(platform_data);
 
-  if (!bgfx::init(bgfx::RendererType::OpenGL)) {
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to initialize bgfx!");
+  if (!bgfx::init(renderer_type)) {
+    LOG(ERROR) << "Failed to initialize bgfx!";
     result = result_t::ERR;
   }
   else {
+    LOG(INFO) << "Apply screen/frame initial states";
     bgfx::reset(width, height, BGFX_RESET_VSYNC);
     bgfx::setViewClear(0
       , BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
