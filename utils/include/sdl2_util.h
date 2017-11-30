@@ -2,7 +2,7 @@
 #pragma once
 
 #include <memory>
-#include <SDL.h>
+#include <SDL_video.h>
 
 namespace sdl2 {
 

@@ -1,9 +1,7 @@
 
 
-#include "bgfx_util.h"
-#include "sdl2_util.h"
-
-#include "easylogging++.h"
+////////////////////////////////////////////////////////////////////////////////
+// NOTE: These must be included first.
 
 #include <bx/os.h>
 
@@ -11,6 +9,13 @@ BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wextern-c-compat")
 #include <SDL_syswm.h>
 BX_PRAGMA_DIAGNOSTIC_POP()
+
+////////////////////////////////////////////////////////////////////////////////
+
+#include "bgfx_util.h"
+#include "sdl2_util.h"
+
+#include "easylogging++.h"
 
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
@@ -45,7 +50,7 @@ result_t init(bgfx::RendererType::Enum renderer_type, sdl2::window_ptr_t& window
       platform_data.nwh = info.info.win.window;
     } break;
     default: {
-      LOG(WARN) << "Unsupported platform! We're probably going to crash!";
+      LOG(WARNING) << "Unsupported platform! We're probably going to crash!";
       platform_data.ndt = nullptr;
       platform_data.nwh = nullptr;
     } break;

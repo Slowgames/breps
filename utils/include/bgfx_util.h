@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include <bgfx/bgfx.h>
-
 #include "types.h"
 #include "sdl2_util.h"
+
+#include <bgfx/bgfx.h>
 
 namespace bgfx_util {
 
