@@ -41,6 +41,23 @@ TEST_CASE( "hedge indexes work as expected", "[index_types]") {
   }
 }
 
+TEST_CASE( "Function sets behave as intended", "[function_sets]" ) {
+  SECTION( "Edge function sets can be given null input when needed and can be checked." ) {
+    hedge::edge_fn_t bad(nullptr, hedge::edge_index_t());
+    REQUIRE_FALSE(bad);
+  }
+
+  SECTION( "Vertex function sets can be given null input when needed and can be checked." ) {
+    hedge::vertex_fn_t bad(nullptr, hedge::vertex_index_t());
+    REQUIRE_FALSE(bad);
+  }
+
+  SECTION( "Face function sets can be given null input when needed and can be checked." ) {
+    hedge::face_fn_t bad(nullptr, hedge::face_index_t());
+    REQUIRE_FALSE(bad);
+  }
+}
+
 TEST_CASE( "hedge can create a basic quad", "[basic_quad]") {
 
   SECTION( "The default basic_mesh_t is of the expected number of elements" ) {

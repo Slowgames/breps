@@ -2,7 +2,6 @@
    A mesh kernel needs to provide the fundamental data operations and ideally nothing else.
  */
 
-
 struct mesh_kernel_t {
   std::vector<glm::vec3> points;
   std::vector<vertex_t> vertices;
@@ -11,16 +10,9 @@ struct mesh_kernel_t {
 
   mesh_kernel_t() {
     points.emplace_back(glm::vec3(0.0f, 0.0f, 0.0f));
-    vertices.emplace_back(vertex_t { default_edge_index });
-    faces.emplace_back(face_t { default_edge_index });
-    edges.emplace_back(
-      edge_t {
-        default_vertex_index,
-          default_face_index,
-          default_edge_index,
-          default_edge_index,
-          default_edge_index
-          });
+    vertices.emplace_back( vertex_t {} );
+    faces.emplace_back( face_t {} );
+    edges.emplace_back( edge_t {} );
   }
 
   size_t point_count() const {
