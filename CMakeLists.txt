@@ -5,7 +5,7 @@ project(breps)
 include(FeatureSummary)
 
 add_subdirectory(vendor)
-add_subdirectory(mesh)
+add_subdirectory(hedge)
 add_subdirectory(utils)
 add_subdirectory(hello)
 
