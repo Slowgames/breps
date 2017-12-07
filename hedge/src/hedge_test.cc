@@ -62,9 +62,9 @@ TEST_CASE( "hedge can create a basic quad", "[basic_quad]") {
 
   SECTION( "The default basic_mesh_t is of the expected number of elements" ) {
     hedge::mesh_t mesh;
-    REQUIRE(mesh.point_count() == 1);
-    REQUIRE(mesh.vertex_count() == 1);
-    REQUIRE(mesh.face_count() == 1);
-    REQUIRE(mesh.edge_count() == 1);
+    REQUIRE(mesh.kernel()->point_count() == 1);
+    REQUIRE(mesh.kernel()->vertex_count() == 1);
+    REQUIRE(mesh.kernel()->face_count() == 1);
+    REQUIRE(mesh.kernel()->edge_count() == 1);
   }
 }

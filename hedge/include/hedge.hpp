@@ -6,22 +6,16 @@
 
 namespace hedge {
 
-struct edge_t;
-struct face_t;
-struct vertex_t;
-class  mesh_t;
+struct edge_t; struct edge_index_t;
+struct face_t; struct face_index_t;
+struct vertex_t; struct vertex_index_t;
+
+class kernel_t;
+class mesh_t;
 
 // This is not so awesome, but I don't want people to require glm
 using vec3_t = std::array<float, 3>;
 using vec4_t = std::array<float, 4>;
-
-// An opaque type that hides the implementation details of how items are
-// stored and created and destroyed. Ideally to allow us to use the most
-// appropriate methods for the platform/runtime.
-// A default implementation using standard c++14 types is available when
-// you define HEDGE_ENABLE_BASIC_MESH.
-struct mesh_kernel_t;
-using mesh_kernel_ptr_t = std::unique_ptr<mesh_kernel_t, void(*)(mesh_kernel_t*)>;
 
 /**
    Using a strong index type instead of a bare pointer or generic integer index
@@ -95,14 +89,14 @@ struct vertex_t {
  */
 template<typename TIndexType>
 class element_fn_t {
-  mesh_t* _mesh;
+  kernel_t* _kernel;
   TIndexType _index;
 public:
-  explicit element_fn_t(mesh_t* mesh, TIndexType index)
-    : _mesh(mesh), _index(index)
+  explicit element_fn_t(kernel_t* kernel, TIndexType index)
+    : _kernel(kernel), _index(index)
   {}
   explicit operator bool() const noexcept {
-    return _mesh != nullptr && (bool)_index;
+    return _kernel != nullptr && (bool)_index;
   }
 };
 
@@ -123,6 +117,29 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+   The mesh kernel implements/provides the fundamental storage and access operations.
+ */
+class kernel_t {
+public:
+  using ptr_t = std::unique_ptr<kernel_t, void(*)(kernel_t*)>;
+
+  virtual edge_t* get(edge_index_t index) = 0;
+  // face_t* get(face_index_t index) = 0;
+  // vertex_t* get(vertex_index_t index) = 0;
+  // vec3_t* get(point_index_t index) = 0;
+
+  virtual edge_index_t new_edge(edge_t** edge) = 0;
+  // face_t* set(face_index_t index) = 0;
+  // vertex_t* set(vertex_index_t index) = 0;
+  // vec3_t* set(point_index_t index) = 0;
+
+  virtual size_t point_count() const = 0;
+  virtual size_t vertex_count() const = 0;
+  virtual size_t face_count() const = 0;
+  virtual size_t edge_count() const = 0;
+};
+
 
 /**
    Mesh can do a great deal of work on it's own as long as the kernel implements
@@ -133,14 +150,14 @@ public:
    - add_attribute, remove_attribute, get_attribute
  */
 class mesh_t {
-  mesh_kernel_ptr_t kernel;
+  kernel_t::ptr_t _kernel;
 public:
+#ifdef HEDGE_ENABLE_DEFAULT_KERNEL
   mesh_t();
+#endif
+  mesh_t(kernel_t::ptr_t&&);
 
-  size_t edge_count() const;
-  size_t face_count() const;
-  size_t vertex_count() const;
-  size_t point_count() const;
+  kernel_t::ptr_t const& kernel() const;
 
   edge_fn_t   get(edge_index_t   index) const;
   face_fn_t   get(face_index_t   index) const;

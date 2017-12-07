@@ -8,27 +8,57 @@
 namespace hedge {
 
 #ifdef HEDGE_ENABLE_DEFAULT_KERNEL
-#include "default_kernel.cc"
-#endif // HEDGE_ENABLE_BASIC_MESH
+class basic_kernel_t : public kernel_t {
+  std::vector<glm::vec3> points;
+  std::vector<vertex_t> vertices;
+  std::vector<face_t> faces;
+  std::vector<edge_t> edges;
+public:
+  basic_kernel_t() {
+    points.emplace_back(glm::vec3(0.0f, 0.0f, 0.0f));
+    vertices.emplace_back( vertex_t {} );
+    faces.emplace_back( face_t {} );
+    edges.emplace_back( edge_t {} );
+  }
+
+  edge_t* get(edge_index_t index) override {
+    return nullptr;
+  }
+
+  edge_index_t new_edge(edge_t** edge) override {
+    edge_index_t index;
+    (*edge) = nullptr;
+    return index;
+  }
+
+  size_t point_count() const override {
+    return points.size();
+  }
+
+  size_t vertex_count() const override {
+    return vertices.size();
+  }
+
+  size_t face_count() const override {
+    return faces.size();
+  }
+
+  size_t edge_count() const override {
+    return edges.size();
+  }
+};
 
 mesh_t::mesh_t()
-  : kernel(new mesh_kernel_t, [](mesh_kernel_t* k) { delete k; })
+  : _kernel(new basic_kernel_t, [](kernel_t* k) { delete k; })
+{}
+#endif // HEDGE_ENABLE_BASIC_MESH
+
+mesh_t::mesh_t(kernel_t::ptr_t&& kernel)
+  : _kernel(std::move(kernel))
 {}
 
-size_t mesh_t::edge_count() const {
-  return kernel->edge_count();
-}
-
-size_t mesh_t::face_count() const {
-  return kernel->face_count();
-}
-
-size_t mesh_t::vertex_count() const {
-  return kernel->vertex_count();
-}
-
-size_t mesh_t::point_count() const {
-  return kernel->point_count();
+kernel_t::ptr_t const& mesh_t::kernel() const {
+  return _kernel;
 }
 
 
