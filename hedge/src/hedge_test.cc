@@ -6,7 +6,7 @@
 
 
 TEST_CASE( "hedge indexes work as expected", "[index_types]") {
-  SECTION( "An index can be created and copied" ) {
+  SECTION( "An index can be created and copy assigned" ) {
     hedge::edge_index_t def;
     hedge::edge_index_t e1(1, 1);
     hedge::edge_index_t e2 = e1;
@@ -22,22 +22,17 @@ TEST_CASE( "hedge indexes work as expected", "[index_types]") {
     hedge::edge_index_t def;
     hedge::edge_index_t e1(1, 1);
     hedge::edge_index_t e2 = e1;
-    hedge::vertex_index_t v1(1, 1);
 
     REQUIRE(def != e1);
     REQUIRE(e1 == e2);
-    //REQUIRE(v1 == e1);
   }
+}
 
-  SECTION( "An index is sufficiently type-safe" ) {
-    auto test_fn = [](hedge::edge_index_t a, hedge::edge_index_t b) -> bool {
-      return a == b;
-    };
-
-    hedge::edge_index_t e1;
-    hedge::edge_index_t e2;
-
-    REQUIRE(test_fn(e1, e2));
+TEST_CASE( "Edges can be created and updated.", "[edges]" ) {
+  SECTION( "Default edge can be updated." ) {
+    hedge::edge_t edge;
+    hedge::vertex_index_t vert(3, 0);
+    edge.vertex_index = vert;
   }
 }
 

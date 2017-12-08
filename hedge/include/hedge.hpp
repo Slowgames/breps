@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
+
 
 namespace hedge {
 
@@ -13,31 +13,34 @@ struct vertex_t; struct vertex_index_t;
 class kernel_t;
 class mesh_t;
 
-// This is not so awesome, but I don't want people to require glm
+// This is not so awesome, but I don't want people to require any particular math lib
 using vec3_t = std::array<float, 3>;
 using vec4_t = std::array<float, 4>;
+
+using offset_t = size_t;
+using generation_t = size_t;
 
 /**
    Using a strong index type instead of a bare pointer or generic integer index
    allows you to potentially re-use cells (if the kernel implements support for
    it) and can be more easily or directly validated.
  */
-enum class index_type_t : uint16_t {
+enum class index_type_t : unsigned char {
   vertex, edge, face, point, attribute, unsupported
 };
 template<index_type_t TIndexType = index_type_t::unsupported>
 struct index_t {
-  const uint32_t generation;
-  const uint32_t offset;
+  offset_t offset;
+  generation_t generation;
 
   explicit index_t() noexcept
-    : generation(0)
-    , offset(0)
+    : offset(0)
+    , generation(0)
   {}
 
-  explicit index_t(uint32_t _g, uint32_t _o) noexcept
-    : generation(_g)
-    , offset(_o)
+  explicit index_t(offset_t _o, generation_t _g) noexcept
+    : offset(_o)
+    , generation(_g)
   {}
 
   bool operator !=(const index_t& other) const {
@@ -63,7 +66,12 @@ struct point_index_t : public index_t<index_type_t::point> { using index_t::inde
 ////////////////////////////////////////////////////////////////////////////////
 // Our principle element structures.
 
-struct edge_t {
+struct element_t {
+  uint32_t generation;
+  uint32_t flags;
+};
+
+struct edge_t : public element_t {
   vertex_index_t vertex_index;
   face_index_t face_index;
   edge_index_t next_index;
@@ -71,11 +79,11 @@ struct edge_t {
   edge_index_t adjacent_index;
 };
 
-struct face_t {
+struct face_t : public element_t {
   edge_index_t edge_index;
 };
 
-struct vertex_t {
+struct vertex_t : public element_t {
   edge_index_t edge_index;
 };
 
@@ -129,10 +137,15 @@ public:
   // vertex_t* get(vertex_index_t index) = 0;
   // vec3_t* get(point_index_t index) = 0;
 
-  virtual edge_index_t new_edge(edge_t** edge) = 0;
+  virtual edge_index_t create(edge_t** edge) = 0;
   // face_t* set(face_index_t index) = 0;
   // vertex_t* set(vertex_index_t index) = 0;
   // vec3_t* set(point_index_t index) = 0;
+
+  virtual void remove(edge_index_t index) = 0;
+  // virtual void remove(face_index_t index) = 0;
+  // virtual void remove(vertex_index_t index) = 0;
+  // virtual void remove(point_index_t index) = 0;
 
   virtual size_t point_count() const = 0;
   virtual size_t vertex_count() const = 0;

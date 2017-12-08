@@ -22,13 +22,34 @@ public:
   }
 
   edge_t* get(edge_index_t index) override {
-    return nullptr;
+    edge_t* edge = nullptr;
+    if (index && index.offset < edges.size()) {
+      edge = edges.data() + index.offset;
+      if (edge->generation != index.generation) {
+        edge = nullptr;
+      }
+    }
+    return edge;
   }
 
-  edge_index_t new_edge(edge_t** edge) override {
-    edge_index_t index;
-    (*edge) = nullptr;
+  edge_index_t create(edge_t** edge) override {
+    edge_index_t index(edges.size(), 0);
+    edges.emplace_back( edge_t {} );
+    (*edge) = edges.data() + index.offset;
     return index;
+  }
+
+  /**
+     Removes an element by swapping with the end. Increments the element generation.
+   */
+  void remove(edge_index_t index) override {
+    auto* edge_at_index = get(index);
+    if (edge_at_index != nullptr) {
+      auto edge_at_back = edges.back();
+      *edge_at_index = edge_at_back;
+      edge_at_index->generation++;
+      edges.pop_back();
+    }
   }
 
   size_t point_count() const override {
