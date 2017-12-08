@@ -9,13 +9,10 @@ namespace hedge {
 struct edge_t; struct edge_index_t;
 struct face_t; struct face_index_t;
 struct vertex_t; struct vertex_index_t;
+struct vec3_t; struct point_index_t;
 
 class kernel_t;
 class mesh_t;
-
-// This is not so awesome, but I don't want people to require any particular math lib
-using vec3_t = std::array<float, 3>;
-using vec4_t = std::array<float, 4>;
 
 using offset_t = size_t;
 using generation_t = size_t;
@@ -87,6 +84,11 @@ struct vertex_t : public element_t {
   edge_index_t edge_index;
 };
 
+// This is not so awesome, but I don't want people to require any particular math lib
+struct vec3_t : public element_t {
+  float x, y, z;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 // Function sets proxy the mesh and elements and provide an easy access api
 
@@ -133,19 +135,19 @@ public:
   using ptr_t = std::unique_ptr<kernel_t, void(*)(kernel_t*)>;
 
   virtual edge_t* get(edge_index_t index) = 0;
-  // face_t* get(face_index_t index) = 0;
-  // vertex_t* get(vertex_index_t index) = 0;
-  // vec3_t* get(point_index_t index) = 0;
+  virtual face_t* get(face_index_t index) = 0;
+  virtual vertex_t* get(vertex_index_t index) = 0;
+  virtual vec3_t* get(point_index_t index) = 0;
 
   virtual edge_index_t create(edge_t** edge) = 0;
-  // face_t* set(face_index_t index) = 0;
-  // vertex_t* set(vertex_index_t index) = 0;
-  // vec3_t* set(point_index_t index) = 0;
+  virtual face_index_t create(face_t** face) = 0;
+  virtual vertex_index_t create(vertex_t** vertex) = 0;
+  virtual point_index_t create(vec3_t** point) = 0;
 
   virtual void remove(edge_index_t index) = 0;
-  // virtual void remove(face_index_t index) = 0;
-  // virtual void remove(vertex_index_t index) = 0;
-  // virtual void remove(point_index_t index) = 0;
+  virtual void remove(face_index_t index) = 0;
+  virtual void remove(vertex_index_t index) = 0;
+  virtual void remove(point_index_t index) = 0;
 
   virtual size_t point_count() const = 0;
   virtual size_t vertex_count() const = 0;
