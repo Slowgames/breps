@@ -35,9 +35,14 @@ struct index_t {
     , generation(0)
   {}
 
-  explicit index_t(offset_t _o, generation_t _g) noexcept
-    : offset(_o)
-    , generation(_g)
+  explicit index_t(offset_t o) noexcept
+    : offset(o)
+    , generation(0)
+  {}
+
+  explicit index_t(offset_t o, generation_t g) noexcept
+    : offset(o)
+    , generation(g)
   {}
 
   bool operator !=(const index_t& other) const {

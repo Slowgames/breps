@@ -35,12 +35,17 @@ public:
   }
 
   TElement* get(TElementIndex index) const {
+    TElement* element = get(index.offset);
+    if (element != nullptr && element->generation != index.generation) {
+      element = nullptr;
+    }
+    return element;
+  }
+
+  TElement* get(offset_t offset) const {
     TElement* element = nullptr;
-    if (index && index.offset < collection.size()) {
-      element = (TElement*)collection.data() + index.offset;
-      if (element->generation == index.generation) {
-        element = nullptr;
-      }
+    if (offset < collection.size()) {
+      element = (TElement*)collection.data() + offset;
     }
     return element;
   }

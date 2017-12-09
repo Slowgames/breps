@@ -33,6 +33,7 @@ TEST_CASE( "Edges can be created and updated.", "[edges]" ) {
     hedge::edge_t edge;
     hedge::vertex_index_t vert(3, 0);
     edge.vertex_index = vert;
+    REQUIRE(edge.vertex_index == vert);
   }
 }
 
@@ -53,13 +54,48 @@ TEST_CASE( "Function sets behave as intended", "[function_sets]" ) {
   }
 }
 
-TEST_CASE( "hedge can create a basic quad", "[basic_quad]") {
+TEST_CASE( "Essential kernel operations allow you to create a triangle.", "[basics]" ) {
+  hedge::mesh_t mesh;
+  hedge::point_index_t pi1;
+
+  REQUIRE_FALSE(pi1);
 
   SECTION( "The default basic_mesh_t is of the expected number of elements" ) {
-    hedge::mesh_t mesh;
     REQUIRE(mesh.kernel()->point_count() == 1);
     REQUIRE(mesh.kernel()->vertex_count() == 1);
     REQUIRE(mesh.kernel()->face_count() == 1);
     REQUIRE(mesh.kernel()->edge_count() == 1);
+  }
+
+  SECTION( "We can add three points to the mesh." ) {
+    hedge::vec3_t* p0 = nullptr;
+    mesh.kernel()->create(&p0);
+    p0->x = 0.f;
+    p0->y = 0.f;
+    p0->z = 0.f;
+
+    hedge::vec3_t* p1 = nullptr;
+    pi1 = mesh.kernel()->create(&p1);
+    p1->x = 1.f;
+    p1->y = 0.f;
+    p1->z = 0.f;
+    REQUIRE(pi1);
+
+    hedge::vec3_t* p2 = nullptr;
+    mesh.kernel()->create(&p2);
+    p2->x = 1.f;
+    p2->y = 1.f;
+    p2->z = 0.f;
+
+    REQUIRE(mesh.kernel()->point_count() == 4);
+  }
+
+  SECTION( "We can retrieve a previously created point." ) {
+    REQUIRE(pi1);
+    hedge::vec3_t* p1 = mesh.kernel()->get(pi1);
+    REQUIRE(p1 != nullptr);
+    REQUIRE(p1->x == 1.f);
+    REQUIRE(p1->y == 0.f);
+    REQUIRE(p1->z == 0.f);
   }
 }
