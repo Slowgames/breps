@@ -6,7 +6,6 @@ include(FeatureSummary)
 
 add_subdirectory(vendor)
 add_subdirectory(hedge)
-add_subdirectory(utils)
-add_subdirectory(hello)
+add_subdirectory(demos)
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
