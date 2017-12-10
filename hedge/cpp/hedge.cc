@@ -4,7 +4,6 @@
 #include <array>
 #include <vector>
 
-#include <glm/glm.hpp>
 #include <easylogging++.h>
 
 

@@ -5,7 +5,7 @@ cc_library (
     srcs = ["cpp/hedge.cc"],
     hdrs = ["cpp/hedge.hpp"],
     copts = ["-Ihedge/cpp"],
-    deps = ["//vendor:easylogging++", "//vendor:glm"]
+    deps = ["//vendor:easylogging++", "//vendor:mathfu"]
 )
 
 cc_test (
