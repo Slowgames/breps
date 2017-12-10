@@ -172,9 +172,7 @@ public:
 class mesh_t {
   kernel_t::ptr_t _kernel;
 public:
-#ifdef HEDGE_ENABLE_DEFAULT_KERNEL
   mesh_t();
-#endif
   mesh_t(kernel_t::ptr_t&&);
 
   kernel_t::ptr_t const& kernel() const;

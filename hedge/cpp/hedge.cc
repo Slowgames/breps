@@ -4,15 +4,11 @@
 #include <array>
 #include <vector>
 
-#ifdef HEDGE_ENABLE_DEFAULT_KERNEL
 #include <glm/glm.hpp>
 #include <easylogging++.h>
-#endif // HEDGE_ENABLE_DEFAULT_KERNEL
 
 
 namespace hedge {
-
-#ifdef HEDGE_ENABLE_DEFAULT_KERNEL
 
 /**
    Rather than create a bunch of preprocessor macros to prevent copypasta I decided
@@ -141,7 +137,6 @@ public:
 mesh_t::mesh_t()
   : _kernel(new basic_kernel_t, [](kernel_t* k) { delete k; })
 {}
-#endif // HEDGE_ENABLE_BASIC_MESH
 
 mesh_t::mesh_t(kernel_t::ptr_t&& kernel)
   : _kernel(std::move(kernel))
