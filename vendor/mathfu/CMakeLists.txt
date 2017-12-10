@@ -17,16 +17,16 @@ set(PROJECT_NAME MathFu)
 project(MathFu)
 
 # Call fplutil to get locations of dependencies and set common build settings.
-include("cmake/find_fplutil.cmake")
-include("${fplutil_dir}/buildutil/cmake_common.txt")
-set_common_build_variables()
+# include("cmake/find_fplutil.cmake")
+# include("${fplutil_dir}/buildutil/cmake_common.txt")
+# set_common_build_variables()
 
 # Options that control the build configuration.
 # To configure MathFu flags per build target, see the
 # mathfu_configure_flags() function.
 option(mathfu_enable_simd "Use SIMD implementations when available." ON)
-option(mathfu_build_benchmarks "Build MathFu benchmarks." ON)
-option(mathfu_build_tests "Build MathFu unit tests." ON)
+option(mathfu_build_benchmarks "Build MathFu benchmarks." OFF)
+option(mathfu_build_tests "Build MathFu unit tests." OFF)
 
 # Save the mathfu directory, store this in the cache so that it's globally
 # accessible from mathfu_configure_flags().
@@ -52,7 +52,7 @@ function(mathfu_configure_flags target)
 
   # Add required includes to the target.
   target_include_directories(${target}
-    PRIVATE ${mathfu_dir}/include ${dependencies_vectorial_dir}/include)
+    PRIVATE ${mathfu_dir}/include)
 
   # Parse optional arguments.
   set(additional_args ${ARGN})
@@ -135,3 +135,7 @@ endif()
 if(mathfu_build_tests)
   add_subdirectory(unit_tests)
 endif()
+
+add_library(mathfu INTERFACE)
+target_include_directories(mathfu INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(mathfu INTERFACE vectorial)
