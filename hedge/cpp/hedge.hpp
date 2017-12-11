@@ -170,17 +170,16 @@ public:
    - add_attribute, remove_attribute, get_attribute
  */
 class mesh_t {
-  kernel_t::ptr_t _kernel;
 public:
   mesh_t();
   mesh_t(kernel_t::ptr_t&&);
-
-  kernel_t::ptr_t const& kernel() const;
 
   edge_fn_t   get(edge_index_t   index) const;
   face_fn_t   get(face_index_t   index) const;
   vertex_fn_t get(vertex_index_t index) const;
   vec3_t      get(point_index_t  index) const;
+
+  kernel_t::ptr_t kernel;
 };
 
 } // namespace hedge

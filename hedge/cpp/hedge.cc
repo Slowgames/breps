@@ -134,16 +134,13 @@ public:
 };
 
 mesh_t::mesh_t()
-  : _kernel(new basic_kernel_t, [](kernel_t* k) { delete k; })
+  : kernel(new basic_kernel_t, [](kernel_t* k) { delete k; })
 {}
 
-mesh_t::mesh_t(kernel_t::ptr_t&& kernel)
-  : _kernel(std::move(kernel))
+mesh_t::mesh_t(kernel_t::ptr_t&& _kernel)
+  : kernel(std::move(kernel))
 {}
 
-kernel_t::ptr_t const& mesh_t::kernel() const {
-  return _kernel;
-}
 
 
 } // namespace hedge
