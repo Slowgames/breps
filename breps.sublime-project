@@ -1,0 +1,16 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+			"folder_exclude_patterns": ["bazel-*", ".vscode"]
+		}
+	],
+	"build_systems":
+	[
+		{
+			"name": "bazel build",
+			"shell_cmd": "bazel build //..."
+		}
+	]
+}

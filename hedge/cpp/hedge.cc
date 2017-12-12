@@ -45,10 +45,9 @@ public:
     return element;
   }
 
-  TElementIndex create(TElement** element) {
+  TElementIndex emplace(TElement&& element) {
     TElementIndex index(collection.size(), 0);
-    collection.emplace_back(TElement {});
-    (*element) = collection.data() + index.offset;
+    collection.emplace_back(std::move(element));
     return index;
   }
 
@@ -72,10 +71,10 @@ public:
 };
 
 class basic_kernel_t : public kernel_t {
-  element_vector_t<vec3_t, point_index_t>    points;
   element_vector_t<vertex_t, vertex_index_t> vertices;
   element_vector_t<face_t, face_index_t>     faces;
   element_vector_t<edge_t, edge_index_t>     edges;
+  std::vector<point_t>                       points;
 public:
   edge_t* get(edge_index_t index) override {
     return edges.get(index);
@@ -86,21 +85,27 @@ public:
   vertex_t* get(vertex_index_t index) override {
     return vertices.get(index);
   }
-  vec3_t* get(point_index_t index) override {
-    return points.get(index);
+  point_t* get(point_index_t index) override {
+    point_t* result = nullptr;
+    if (index.offset < points.size()) {
+      result = points.data() + index.offset;
+    }
+    return result;
   }
 
-  edge_index_t create(edge_t** edge) override {
-    return edges.create(edge);
+  edge_index_t emplace(edge_t&& edge) override {
+    return edges.emplace(std::move(edge));
   }
-  face_index_t create(face_t** face) override {
-    return faces.create(face);
+  face_index_t emplace(face_t&& face) override {
+    return faces.emplace(std::move(face));
   }
-  vertex_index_t create(vertex_t** vertex) override {
-    return vertices.create(vertex);
+  vertex_index_t emplace(vertex_t&& vertex) override {
+    return vertices.emplace(std::move(vertex));
   }
-  point_index_t create(vec3_t** point) override {
-    return points.create(point);
+  point_index_t emplace(point_t&& point) override {
+    point_index_t index(points.size(), 0);
+    points.emplace_back(std::move(point));
+    return index;
   }
 
   void remove(edge_index_t index) override {
@@ -113,11 +118,14 @@ public:
     return vertices.remove(index);
   }
   void remove(point_index_t index) override {
-    return points.remove(index);
+    auto* point_at_index = get(index);
+    auto point_at_back = points.back();
+    (*point_at_index) = point_at_back;
+    points.pop_back();
   }
 
   size_t point_count() const override {
-    return points.count();
+    return points.size();
   }
 
   size_t vertex_count() const override {
@@ -141,6 +149,18 @@ mesh_t::mesh_t(kernel_t::ptr_t&& _kernel)
   : kernel(std::move(kernel))
 {}
 
+size_t mesh_t::point_count() const {
+  return kernel->point_count();
+}
+size_t mesh_t::vertex_count() const {
+  return kernel->vertex_count() - 1;
+}
+size_t mesh_t::edge_count() const {
+  return kernel->edge_count() - 1;
+}
+size_t mesh_t::face_count() const {
+  return kernel->face_count() - 1;
+}
 
 
 } // namespace hedge

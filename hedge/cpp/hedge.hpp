@@ -2,18 +2,19 @@
 #pragma once
 
 #include <memory>
-
+#include <mathfu/glsl_mappings.h>
 
 namespace hedge {
 
 struct edge_t; struct edge_index_t;
 struct face_t; struct face_index_t;
 struct vertex_t; struct vertex_index_t;
-struct vec3_t; struct point_index_t;
+struct point_index_t;
 
 class kernel_t;
 class mesh_t;
 
+using point_t = mathfu::vec3;
 using offset_t = size_t;
 using generation_t = size_t;
 
@@ -23,7 +24,7 @@ using generation_t = size_t;
    it) and can be more easily or directly validated.
  */
 enum class index_type_t : unsigned char {
-  vertex, edge, face, point, attribute, unsupported
+  vertex, edge, face, point, unsupported
 };
 template<index_type_t TIndexType = index_type_t::unsupported>
 struct index_t {
@@ -87,15 +88,11 @@ struct face_t : public element_t {
 
 struct vertex_t : public element_t {
   edge_index_t edge_index;
-};
-
-// This is not so awesome, but I don't want people to require any particular math lib
-struct vec3_t : public element_t {
-  float x, y, z;
+  point_index_t point_index;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// Function sets proxy the mesh and elements and provide an easy access api
+// "Function sets" proxy the mesh and elements and provide an easy access api
 
 /**
    We have this simple templated base class which allows functions that request
@@ -142,12 +139,12 @@ public:
   virtual edge_t* get(edge_index_t index) = 0;
   virtual face_t* get(face_index_t index) = 0;
   virtual vertex_t* get(vertex_index_t index) = 0;
-  virtual vec3_t* get(point_index_t index) = 0;
+  virtual point_t* get(point_index_t index) = 0;
 
-  virtual edge_index_t create(edge_t** edge) = 0;
-  virtual face_index_t create(face_t** face) = 0;
-  virtual vertex_index_t create(vertex_t** vertex) = 0;
-  virtual point_index_t create(vec3_t** point) = 0;
+  virtual edge_index_t emplace(edge_t&& edge) = 0;
+  virtual face_index_t emplace(face_t&& face) = 0;
+  virtual vertex_index_t emplace(vertex_t&& vertex) = 0;
+  virtual point_index_t emplace(point_t&& point) = 0;
 
   virtual void remove(edge_index_t index) = 0;
   virtual void remove(face_index_t index) = 0;
@@ -174,10 +171,17 @@ public:
   mesh_t();
   mesh_t(kernel_t::ptr_t&&);
 
-  edge_fn_t   get(edge_index_t   index) const;
-  face_fn_t   get(face_index_t   index) const;
-  vertex_fn_t get(vertex_index_t index) const;
-  vec3_t      get(point_index_t  index) const;
+  size_t point_count() const;
+  size_t vertex_count() const;
+  size_t edge_count() const;
+  size_t face_count() const;
+
+  edge_fn_t edge(edge_index_t index) const;
+  face_fn_t face(face_index_t index) const;
+  vertex_fn_t vertex(vertex_index_t index) const;
+
+  point_t* point(vertex_index_t vindex) const;
+  point_t* point(offset_t offset) const;
 
   kernel_t::ptr_t kernel;
 };
