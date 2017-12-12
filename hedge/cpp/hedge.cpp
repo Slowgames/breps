@@ -11,7 +11,8 @@ namespace hedge {
 
 /**
    Rather than create a bunch of preprocessor macros to prevent copypasta I decided
-   to create a simple templated wrapper over std::vector.
+   to create a simple templated wrapper over std::vector which implements the
+   requirements for element storage.
  */
 template<typename TElement, typename TElementIndex>
 class element_vector_t {
@@ -70,11 +71,14 @@ public:
   }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////
+
 class basic_kernel_t : public kernel_t {
   element_vector_t<vertex_t, vertex_index_t> vertices;
   element_vector_t<face_t, face_index_t>     faces;
   element_vector_t<edge_t, edge_index_t>     edges;
-  std::vector<point_t>                       points;
+  element_vector_t<point_t, point_index_t>   points;
+
 public:
   edge_t* get(edge_index_t index) override {
     return edges.get(index);
@@ -86,11 +90,7 @@ public:
     return vertices.get(index);
   }
   point_t* get(point_index_t index) override {
-    point_t* result = nullptr;
-    if (index.offset < points.size()) {
-      result = points.data() + index.offset;
-    }
-    return result;
+    return points.get(index);
   }
 
   edge_index_t emplace(edge_t&& edge) override {
@@ -103,9 +103,7 @@ public:
     return vertices.emplace(std::move(vertex));
   }
   point_index_t emplace(point_t&& point) override {
-    point_index_t index(points.size(), 0);
-    points.emplace_back(std::move(point));
-    return index;
+    return points.emplace(std::move(point));
   }
 
   void remove(edge_index_t index) override {
@@ -118,14 +116,11 @@ public:
     return vertices.remove(index);
   }
   void remove(point_index_t index) override {
-    auto* point_at_index = get(index);
-    auto point_at_back = points.back();
-    (*point_at_index) = point_at_back;
-    points.pop_back();
+    return points.remove(index);
   }
 
   size_t point_count() const override {
-    return points.size();
+    return points.count();
   }
 
   size_t vertex_count() const override {
@@ -141,6 +136,11 @@ public:
   }
 };
 
+// basic_kernel_t
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
 mesh_t::mesh_t()
   : kernel(new basic_kernel_t, [](kernel_t* k) { delete k; })
 {}
@@ -150,7 +150,7 @@ mesh_t::mesh_t(kernel_t::ptr_t&& _kernel)
 {}
 
 size_t mesh_t::point_count() const {
-  return kernel->point_count();
+  return kernel->point_count() - 1;
 }
 size_t mesh_t::vertex_count() const {
   return kernel->vertex_count() - 1;
@@ -162,5 +162,19 @@ size_t mesh_t::face_count() const {
   return kernel->face_count() - 1;
 }
 
+// mesh_t
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
+point_t::point_t(float x, float y, float z)
+  : element_t()
+  , position(x, y, z)
+{}
+
+point_t::point_t()
+  : element_t()
+  , position(0.f)
+{}
 
 } // namespace hedge

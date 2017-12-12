@@ -9,12 +9,13 @@ namespace hedge {
 struct edge_t; struct edge_index_t;
 struct face_t; struct face_index_t;
 struct vertex_t; struct vertex_index_t;
-struct point_index_t;
+struct point_t; struct point_index_t;
 
 class kernel_t;
 class mesh_t;
 
-using point_t = mathfu::vec3;
+using position_t = mathfu::vec3;
+using color_t = mathfu::vec4;
 using offset_t = size_t;
 using generation_t = size_t;
 
@@ -87,8 +88,15 @@ struct face_t : public element_t {
 };
 
 struct vertex_t : public element_t {
-  edge_index_t edge_index;
   point_index_t point_index;
+  edge_index_t edge_index;
+};
+
+struct point_t : public element_t {
+  mathfu::vec3 position;
+
+  point_t();
+  point_t(float x, float y, float z);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -161,10 +169,6 @@ public:
 /**
    Mesh can do a great deal of work on it's own as long as the kernel implements
    a couple of principle functions related to data storage.
-   - add_vertex, remove_vertex, get_vertex
-   - add_edge, remove_edge, get_edge
-   - add_face, remove_face, get_face
-   - add_attribute, remove_attribute, get_attribute
  */
 class mesh_t {
 public:
@@ -180,8 +184,11 @@ public:
   face_fn_t face(face_index_t index) const;
   vertex_fn_t vertex(vertex_index_t index) const;
 
-  point_t* point(vertex_index_t vindex) const;
   point_t* point(offset_t offset) const;
+  point_t* point(point_index_t pindex) const;
+  point_t* point(vertex_index_t vindex) const;
+
+  std::pair<point_t*, point_t*> points(edge_index_t eindex) const;
 
   kernel_t::ptr_t kernel;
 };

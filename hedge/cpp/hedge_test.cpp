@@ -51,7 +51,7 @@ TEST_CASE("Face function sets can be given null input when needed and can be che
 TEST_CASE( "The default basic_mesh_t is of the expected number of elements", "[mesh]" ) {
   hedge::mesh_t mesh;
 
-  REQUIRE(mesh.kernel->point_count() == 0);
+  REQUIRE(mesh.kernel->point_count() == 1);
   REQUIRE(mesh.kernel->vertex_count() == 1);
   REQUIRE(mesh.kernel->face_count() == 1);
   REQUIRE(mesh.kernel->edge_count() == 1);
@@ -65,27 +65,43 @@ TEST_CASE( "The default basic_mesh_t is of the expected number of elements", "[m
 
 SCENARIO( "Essential kernel operations allow you to create a triangle.", "[kernel_operations]" ) {
 
-  GIVEN("An empty mesh and default point index") {
+  GIVEN("An empty mesh.") {
     hedge::mesh_t mesh;
-    hedge::point_index_t pi1;
-
-    REQUIRE_FALSE(pi1);
     REQUIRE(mesh.point_count() == 0);
 
-    WHEN("We add tree points to the mesh") {
+    WHEN("We add three points to the mesh") {
       mesh.kernel->emplace(hedge::point_t(0.f, 0.f, 0.f));
-      pi1 = mesh.kernel->emplace(hedge::point_t(1.f, 0.f, 0.f));
+      auto pi1 = mesh.kernel->emplace(hedge::point_t(1.f, 0.f, 0.f));
       mesh.kernel->emplace(hedge::point_t(1.f, 1.f, 0.f));
 
-      REQUIRE(mesh.kernel->point_count() == 3);
+      REQUIRE(mesh.kernel->point_count() == 4);
 
       THEN( "We can retrieve one of the previously created points." ) {
         REQUIRE(pi1);
         hedge::point_t* p1 = mesh.kernel->get(pi1);
         REQUIRE(p1 != nullptr);
-        REQUIRE(p1->x == 1.f);
-        REQUIRE(p1->y == 0.f);
-        REQUIRE(p1->z == 0.f);
+        REQUIRE(p1->position.x == 1.f);
+        REQUIRE(p1->position.y == 0.f);
+        REQUIRE(p1->position.z == 0.f);
+      }
+    }
+
+    WHEN("We add three points and three vertices") {
+      auto pindex0 = mesh.kernel->emplace(hedge::point_t(0.f, 0.f, 0.f));
+      auto pindex1 = mesh.kernel->emplace(hedge::point_t(1.f, 0.f, 0.f));
+      auto pindex2 = mesh.kernel->emplace(hedge::point_t(0.f, 1.f, 0.f));
+
+      auto add_vertex = [&mesh](hedge::point_index_t pindex) -> hedge::vertex_index_t {
+        hedge::vertex_t vert;
+        vert.point_index = pindex;
+        return mesh.kernel->emplace(std::move(vert));
+      };
+      auto vindex0 = add_vertex(pindex0);
+      auto vindex1 = add_vertex(pindex1);
+      auto vindex2 = add_vertex(pindex2);
+
+      THEN("We can create three edges and a face.") {
+        //
       }
     }
   }
