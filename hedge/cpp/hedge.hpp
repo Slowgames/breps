@@ -73,6 +73,7 @@ struct point_index_t : public index_t<index_type_t::point> { using index_t::inde
 struct element_t {
   uint32_t generation;
   uint32_t flags;
+  element_t();
 };
 
 struct edge_t : public element_t {

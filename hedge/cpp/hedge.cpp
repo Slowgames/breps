@@ -32,8 +32,13 @@ public:
 
   TElement* get(TElementIndex index) const {
     TElement* element = get(index.offset);
-    if (element != nullptr && element->generation != index.generation) {
-      element = nullptr;
+    if (element != nullptr) {
+      if (element->generation != index.generation) {
+        LOG(WARNING) << "Generation mismatch for element: " << index.offset << ", " << index.generation;
+        LOG(DEBUG) << "Offset: " << index.offset
+                   << ", Generation " << index.generation << " != " << element->generation;
+        element = nullptr;
+      }
     }
     return element;
   }
@@ -43,11 +48,15 @@ public:
     if (offset < collection.size()) {
       element = (TElement*)collection.data() + offset;
     }
+    else {
+      LOG(ERROR) << "Offset requested exceeded element current storage size: "
+                 << offset << " > " << collection.size();
+    }
     return element;
   }
 
   TElementIndex emplace(TElement&& element) {
-    TElementIndex index(collection.size(), 0);
+    TElementIndex index(collection.size(), element.generation);
     collection.emplace_back(std::move(element));
     return index;
   }
@@ -166,6 +175,11 @@ size_t mesh_t::face_count() const {
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
+
+element_t::element_t()
+  : generation(0)
+  , flags(0)
+{}
 
 point_t::point_t(float x, float y, float z)
   : element_t()
