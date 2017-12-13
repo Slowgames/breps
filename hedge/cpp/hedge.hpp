@@ -53,6 +53,12 @@ struct index_t {
   bool operator ==(const index_t& other) const {
     return offset == other.offset && generation == other.generation;
   }
+  friend bool operator< (const index_t& lhs, const index_t& rhs) {
+    return lhs.offset < rhs.offset;
+  }
+  friend bool operator> (const index_t& lhs, const index_t& rhs) {
+    return rhs < lhs;
+  }
 
   explicit operator bool() const noexcept {
     return offset != 0;
@@ -70,9 +76,15 @@ struct point_index_t : public index_t<index_type_t::point> { using index_t::inde
 ////////////////////////////////////////////////////////////////////////////////
 // Our principle element structures.
 
+enum class element_status_t : uint16_t {
+  ACTIVE = 0x0000,
+  INACTIVE = 0x8000
+};
+
 struct element_t {
+  element_status_t status;
+  uint16_t tag;
   uint32_t generation;
-  uint32_t flags;
   element_t();
 };
 

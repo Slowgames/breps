@@ -23,9 +23,13 @@ TEST_CASE( "An index can be compared with other indexes of the same type.", "[in
   hedge::edge_index_t def;
   hedge::edge_index_t e1(1, 1);
   hedge::edge_index_t e2 = e1;
+  hedge::edge_index_t e3(20, 0);
 
   REQUIRE(def != e1);
   REQUIRE(e1 == e2);
+
+  REQUIRE(e3 > e2);
+  REQUIRE(e2 < e3);
 }
 
 TEST_CASE( "Edges can be created and updated.", "[edges]") {
@@ -63,6 +67,38 @@ TEST_CASE( "The default basic_mesh_t is of the expected number of elements", "[m
   REQUIRE(mesh.vertex_count() == 0);
   REQUIRE(mesh.face_count() == 0);
   REQUIRE(mesh.edge_count() == 0);
+}
+
+TEST_CASE( "Removing an element doesn't invalidate other cells", "[kernel_operations]" ) {
+  hedge::mesh_t mesh;
+
+  auto pindex0 = mesh.kernel->emplace(hedge::point_t(0.f, 0.f, 0.f));
+  auto pindex1 = mesh.kernel->emplace(hedge::point_t(1.f, 0.f, 0.f));
+  auto pindex2 = mesh.kernel->emplace(hedge::point_t(0.f, 1.f, 0.f));
+
+  REQUIRE(mesh.point_count() == 3);
+
+  hedge::point_t* p = mesh.kernel->get(pindex1);
+  REQUIRE(p->generation == 0);
+  REQUIRE(p->position.x == 1.f);
+  REQUIRE(p->position.y == 0.f);
+  REQUIRE(p->position.z == 0.f);
+  REQUIRE(p);
+
+  mesh.kernel->remove(pindex1);
+  REQUIRE(mesh.point_count() == 2);
+  REQUIRE(p->generation == 1);
+  p = mesh.kernel->get(pindex1);
+  REQUIRE_FALSE(p);
+
+  pindex1 = mesh.kernel->emplace(hedge::point_t(0.f, 1.0f, 1.0f));
+  REQUIRE(mesh.point_count() == 3);
+  p = mesh.kernel->get(pindex1);
+  REQUIRE(p);
+  REQUIRE(p->generation == 1);
+  REQUIRE(p->position.x == 0.f);
+  REQUIRE(p->position.y == 1.f);
+  REQUIRE(p->position.z == 1.f);
 }
 
 SCENARIO( "Essential kernel operations allow you to create a triangle.", "[kernel_operations]" ) {
@@ -122,7 +158,8 @@ SCENARIO( "Essential kernel operations allow you to create a triangle.", "[kerne
 
         auto update_edge =
           [&mesh](hedge::edge_index_t eindex, hedge::edge_index_t prev, hedge::edge_index_t next,
-                  hedge::face_index_t findex) {
+                  hedge::face_index_t findex)
+          {
             auto* edge = mesh.kernel->get(eindex);
             REQUIRE(edge);
             edge->prev_index = prev;
@@ -153,10 +190,10 @@ SCENARIO( "Essential kernel operations allow you to create a triangle.", "[kerne
         update_edge(eindex2, eindex1, eindex0, findex0);
 
         auto check_edge =
-          [&mesh](
-            hedge::edge_index_t eindex, hedge::edge_index_t prev, hedge::edge_index_t next,
-            hedge::vertex_index_t vindex, hedge::face_index_t findex
-          ) {
+          [&mesh](hedge::edge_index_t eindex, hedge::edge_index_t prev,
+                  hedge::edge_index_t next,
+                  hedge::vertex_index_t vindex, hedge::face_index_t findex)
+          {
             auto* edge = mesh.kernel->get(eindex);
             REQUIRE(edge);
             REQUIRE(edge->face_index == findex);

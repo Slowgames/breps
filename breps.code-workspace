@@ -12,7 +12,8 @@
 			"**/CVS": true,
 			"**/.DS_Store": true,
 			"bazel-*/**": true,
-			"build": true
+			"build": true,
+			".build": true
 		},
 		"files.associations": {
 			"array": "cpp",
@@ -24,7 +25,12 @@
 			"xlocmon": "cpp",
 			"xlocnum": "cpp",
 			"xloctime": "cpp",
-			"vector": "cpp"
+			"vector": "cpp",
+			"queue": "cpp",
+			"stack": "cpp",
+			"deque": "cpp",
+			"list": "cpp",
+			"xstring": "cpp"
 		}
 	}
 }

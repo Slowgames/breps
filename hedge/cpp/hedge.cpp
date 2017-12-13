@@ -3,6 +3,7 @@
 
 #include <array>
 #include <vector>
+#include <queue>
 
 #include <easylogging++.h>
 
@@ -16,8 +17,15 @@ namespace hedge {
  */
 template<typename TElement, typename TElementIndex>
 class element_vector_t {
-  std::vector<TElement> collection;
 public:
+  using collection_t = std::vector<TElement>;
+  using free_cells_t =
+    std::priority_queue<
+      TElementIndex,
+      std::vector<TElementIndex>,
+      std::greater<TElementIndex>
+    >;
+
   element_vector_t() {
     collection.emplace_back( TElement {} );
   }
@@ -27,7 +35,7 @@ public:
   }
 
   size_t count() const {
-    return collection.size();
+    return collection.size() - free_cells.size();
   }
 
   TElement* get(TElementIndex index) const {
@@ -56,28 +64,48 @@ public:
   }
 
   TElementIndex emplace(TElement&& element) {
-    TElementIndex index(collection.size(), element.generation);
-    collection.emplace_back(std::move(element));
+    TElementIndex index;
+    if (free_cells.size()) {
+      index = free_cells.top();
+      free_cells.pop();
+      element.generation = index.generation;
+      auto* element_at_index = get(index.offset);
+      (*element_at_index) = element;
+    }
+    else {
+      index.offset = collection.size();
+      index.generation = element.generation;
+      collection.emplace_back(std::move(element));
+    }
     return index;
   }
 
-  /**
-     Removes an element by swapping with the end. Increments the element generation.
-   */
-  void remove(TElementIndex index) { // TODO: Return status to indicate whether it was removed?
+  void remove(TElementIndex index) {
     auto* element_at_index = get(index);
     if (element_at_index != nullptr) {
-      if (index.offset == 1) {
-        collection.pop_back();
-      }
-      else {
-        auto element_at_back = collection.back();
-        *element_at_index = element_at_back;
-        element_at_index->generation++;
-        collection.pop_back();
-      }
+      element_at_index->generation++;
+      element_at_index->status = element_status_t::INACTIVE;
+      index.generation++;
+      free_cells.push(index);
     }
   }
+
+  void swap(TElementIndex aindex, TElementIndex bindex) {
+    auto* element_a = get(aindex);
+    auto* element_b = get(bindex);
+    if (element_a && element_b) {
+      element_a->generation++;
+      element_b->generation++;
+
+      TElement temp = *element_a;
+      *element_a = *element_b;
+      *element_b = temp;
+    }
+  }
+
+private:
+  collection_t collection;
+  free_cells_t free_cells;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -227,8 +255,9 @@ std::pair<point_t*, point_t*> mesh_t::points(edge_index_t eindex) const {
 ///////////////////////////////////////////////////////////////////////////////
 
 element_t::element_t()
-  : generation(0)
-  , flags(0)
+  : status(element_status_t::ACTIVE)
+  , tag(0)
+  , generation(0)
 {}
 
 point_t::point_t(float x, float y, float z)
