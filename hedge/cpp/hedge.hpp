@@ -6,9 +6,9 @@
 
 namespace hedge {
 
-struct edge_t; struct edge_index_t;
-struct face_t; struct face_index_t;
-struct vertex_t; struct vertex_index_t;
+struct edge_t; struct edge_index_t; class edge_fn_t;
+struct face_t; struct face_index_t; class face_fn_t;
+struct vertex_t; struct vertex_index_t; class vertex_fn_t;
 struct point_t; struct point_index_t;
 
 class kernel_t;
@@ -108,32 +108,60 @@ struct point_t : public element_t {
    an alement to return an "empty" proxy. An alternative to this would be to
    use std::optional but it seems like this would be sufficient for now.
  */
-template<typename TIndexType>
+template<typename TIndex, typename TElement>
 class element_fn_t {
+protected:
   kernel_t* _kernel;
-  TIndexType _index;
+  TIndex _index;
 public:
-  explicit element_fn_t(kernel_t* kernel, TIndexType index)
+  explicit element_fn_t(kernel_t* kernel, TIndex index)
     : _kernel(kernel), _index(index)
   {}
+
   explicit operator bool() const noexcept {
-    return _kernel != nullptr && (bool)_index;
+    return _kernel != nullptr && (bool)_index && element() != nullptr;
+  }
+
+  TElement* element() const {
+    if (_kernel != nullptr) {
+      return _kernel->get(_index);
+    }
+    else {
+      return nullptr;
+    }
+  }
+
+  TIndex index() {
+    return _index;
   }
 };
 
-class edge_fn_t : public element_fn_t<edge_index_t> {
+class edge_fn_t : public element_fn_t<edge_index_t, edge_t> {
 public:
   using element_fn_t::element_fn_t;
+
+  vertex_fn_t vertex();
+  face_fn_t face();
+  edge_fn_t next();
+  edge_fn_t prev();
+  edge_fn_t adjacent();
+
+  bool is_boundary() const;
 };
 
-class face_fn_t : public element_fn_t<face_index_t> {
+class face_fn_t : public element_fn_t<face_index_t, face_t> {
 public:
   using element_fn_t::element_fn_t;
+
+  edge_fn_t edge();
 };
 
-class vertex_fn_t : public element_fn_t<vertex_index_t> {
+class vertex_fn_t : public element_fn_t<vertex_index_t, vertex_t> {
 public:
   using element_fn_t::element_fn_t;
+
+  edge_fn_t edge();
+  point_t* point();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -164,6 +192,11 @@ public:
   virtual size_t vertex_count() const = 0;
   virtual size_t face_count() const = 0;
   virtual size_t edge_count() const = 0;
+
+  virtual void resolve(edge_index_t* index, edge_t** edge) const = 0;
+  virtual void resolve(face_index_t* index, face_t** face) const = 0;
+  virtual void resolve(point_index_t* index, point_t** point) const = 0;
+  virtual void resolve(vertex_index_t* index, vertex_t** vertex) const = 0;
 };
 
 

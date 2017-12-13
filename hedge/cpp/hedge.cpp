@@ -143,6 +143,23 @@ public:
   size_t edge_count() const override {
     return edges.count();
   }
+
+  void resolve(edge_index_t* index, edge_t** edge) const override {
+    *edge = edges.get(index->offset);
+    index->generation = (*edge)->generation;
+  }
+  void resolve(face_index_t* index, face_t** face) const override {
+    *face = faces.get(index->offset);
+    index->generation = (*face)->generation;
+  }
+  void resolve(point_index_t* index, point_t** point) const override {
+    *point = points.get(index->offset);
+    index->generation = (*point)->generation;
+  }
+  void resolve(vertex_index_t* index, vertex_t** vert) const override {
+    *vert = vertices.get(index->offset);
+    index->generation = (*vert)->generation;
+  }
 };
 
 // basic_kernel_t
@@ -171,6 +188,39 @@ size_t mesh_t::face_count() const {
   return kernel->face_count() - 1;
 }
 
+edge_fn_t mesh_t::edge(edge_index_t index) const {
+  return edge_fn_t(kernel.get(), index);
+}
+
+face_fn_t mesh_t::face(face_index_t index) const {
+  return face_fn_t(kernel.get(), index);
+}
+
+vertex_fn_t mesh_t::vertex(vertex_index_t index) const {
+  return vertex_fn_t(kernel.get(), index);
+}
+
+point_t* mesh_t::point(offset_t offset) const {
+  point_index_t index(offset);
+  point_t* p;
+  kernel->resolve(&index, &p);
+  return p;
+}
+point_t* mesh_t::point(point_index_t pindex) const {
+  return kernel->get(pindex);
+}
+point_t* mesh_t::point(vertex_index_t vindex) const {
+  auto* vert = kernel->get(vindex);
+  return point(vert->point_index);
+}
+
+std::pair<point_t*, point_t*> mesh_t::points(edge_index_t eindex) const {
+  auto e = edge(eindex);
+  auto* p0 = e.vertex().point();
+  auto* p1 = e.next().vertex().point();
+  return std::make_pair(p0, p1);
+}
+
 // mesh_t
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -190,5 +240,85 @@ point_t::point_t()
   : element_t()
   , position(0.f)
 {}
+
+///////////////////////////////////////////////////////////////////////////////
+
+#define FN_GETTER(A, B)   \
+  auto *elem = element(); \
+  if (elem != nullptr)    \
+  {                       \
+    return A;             \
+  }                       \
+  else                    \
+  {                       \
+    return B;             \
+  }
+
+#define MAKE_VERT_FN(INDEX) \
+  FN_GETTER(vertex_fn_t(_kernel, INDEX), vertex_fn_t(_kernel, vertex_index_t()))
+
+#define MAKE_FACE_FN(INDEX) \
+  FN_GETTER(face_fn_t(_kernel, INDEX), face_fn_t(_kernel, face_index_t()))
+
+#define MAKE_EDGE_FN(INDEX) \
+  FN_GETTER(edge_fn_t(_kernel, INDEX), edge_fn_t(_kernel, edge_index_t()))
+
+///////////////////////////////////////////////////////////////////////////////
+
+vertex_fn_t edge_fn_t::vertex() {
+  MAKE_VERT_FN(elem->vertex_index)
+}
+
+face_fn_t edge_fn_t::face() {
+  MAKE_FACE_FN(elem->face_index)
+}
+
+edge_fn_t edge_fn_t::next() {
+  MAKE_EDGE_FN(elem->next_index)
+}
+
+edge_fn_t edge_fn_t::prev() {
+  MAKE_EDGE_FN(elem->prev_index)
+}
+
+edge_fn_t edge_fn_t::adjacent() {
+  MAKE_EDGE_FN(elem->adjacent_index)
+}
+
+bool edge_fn_t::is_boundary() const {
+  auto* edge = element();
+  if (edge != nullptr) {
+    if (edge->adjacent_index) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// edge_fn_t
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
+edge_fn_t vertex_fn_t::edge() {
+  MAKE_EDGE_FN(elem->edge_index)
+}
+
+point_t* vertex_fn_t::point() {
+  auto* vert = element();
+  return _kernel->get(vert->point_index);
+}
+
+// vertex_fn_t
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
+edge_fn_t face_fn_t::edge() {
+  MAKE_EDGE_FN(elem->edge_index)
+}
+
+// face_fn_t
+///////////////////////////////////////////////////////////////////////////////
 
 } // namespace hedge
