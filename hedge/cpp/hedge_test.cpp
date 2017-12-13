@@ -75,8 +75,11 @@ TEST_CASE( "Removing an element doesn't invalidate other cells", "[kernel_operat
   auto pindex0 = mesh.kernel->emplace(hedge::point_t(0.f, 0.f, 0.f));
   auto pindex1 = mesh.kernel->emplace(hedge::point_t(1.f, 0.f, 0.f));
   auto pindex2 = mesh.kernel->emplace(hedge::point_t(0.f, 1.f, 0.f));
+  auto pindex3 = mesh.kernel->emplace(hedge::point_t(0.f, 0.f, 1.f));
 
-  REQUIRE(mesh.point_count() == 3);
+  REQUIRE(mesh.point_count() == 4);
+  REQUIRE(pindex1.offset == 2);
+  REQUIRE(pindex2.offset == 3);
 
   hedge::point_t* p = mesh.kernel->get(pindex1);
   REQUIRE(p->generation == 0);
@@ -86,19 +89,28 @@ TEST_CASE( "Removing an element doesn't invalidate other cells", "[kernel_operat
   REQUIRE(p);
 
   mesh.kernel->remove(pindex1);
-  REQUIRE(mesh.point_count() == 2);
+  REQUIRE(mesh.point_count() == 3);
   REQUIRE(p->generation == 1);
   p = mesh.kernel->get(pindex1);
   REQUIRE_FALSE(p);
 
-  pindex1 = mesh.kernel->emplace(hedge::point_t(0.f, 1.0f, 1.0f));
+  mesh.kernel->remove(pindex2);
+  REQUIRE(mesh.point_count() == 2);
+
+  pindex2 = mesh.kernel->emplace(hedge::point_t(1.f, 1.f, 1.f));;
   REQUIRE(mesh.point_count() == 3);
+
+  pindex1 = mesh.kernel->emplace(hedge::point_t(0.f, 1.0f, 1.0f));
+  REQUIRE(mesh.point_count() == 4);
   p = mesh.kernel->get(pindex1);
   REQUIRE(p);
   REQUIRE(p->generation == 1);
   REQUIRE(p->position.x == 0.f);
   REQUIRE(p->position.y == 1.f);
   REQUIRE(p->position.z == 1.f);
+
+  REQUIRE(pindex1.offset == 3);
+  REQUIRE(pindex2.offset == 2);
 }
 
 SCENARIO( "Essential kernel operations allow you to create a triangle.", "[kernel_operations]" ) {
