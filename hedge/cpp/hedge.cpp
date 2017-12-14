@@ -195,6 +195,94 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 
+mesh_modifier_t::mesh_modifier_t(mesh_t& mesh)
+  : _mesh(mesh)
+{}
+
+vertex_index_t mesh_modifier_t::make_vertex(point_index_t pindex) {
+  vertex_t vert;
+  vert.point_index = pindex;
+  return _mesh.kernel->emplace(std::move(vert));
+}
+
+void mesh_modifier_t::update_vertex(vertex_index_t vindex, edge_index_t eindex) {
+  auto* vert = _mesh.kernel->get(vindex);
+  if (vert) {
+    vert->edge_index = eindex;
+  }
+}
+
+edge_index_t mesh_modifier_t::make_edge(vertex_index_t vindex) {
+  edge_t edge;
+  edge.vertex_index = vindex;
+  auto eindex = _mesh.kernel->emplace(std::move(edge));
+  update_vertex(vindex, eindex);
+  return eindex;
+}
+
+edge_index_t mesh_modifier_t::make_edge(vertex_index_t vindex, edge_index_t prev_index) {
+  edge_t edge;
+  edge.vertex_index = vindex;
+  edge.prev_index = prev_index;
+  auto eindex = _mesh.kernel->emplace(std::move(edge));
+  set_next_edge(prev_index, eindex);
+  return eindex;
+}
+
+void mesh_modifier_t::connect_edges(edge_index_t prev_eindex, edge_index_t next_eindex) {
+  set_prev_edge(prev_eindex, next_eindex);
+  set_next_edge(prev_eindex, next_eindex);
+}
+
+void mesh_modifier_t::set_next_edge(edge_index_t prev_index, edge_index_t next_index) {
+  auto* prev = _mesh.kernel->get(prev_index);
+  prev->next_index = next_index;
+}
+
+void mesh_modifier_t::set_prev_edge(edge_index_t prev_index, edge_index_t next_index) {
+  auto* next = _mesh.kernel->get(next_index);
+  next->prev_index = prev_index;
+}
+
+// mesh_modifier_t
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
+edge_loop_builder_t::edge_loop_builder_t(mesh_t& mesh, point_index_t root_pindex)
+  : mesh_modifier_t(mesh)
+  , _root_eindex()
+  , _last_eindex()
+{
+  auto vindex = make_vertex(root_pindex);
+  _root_eindex = make_edge(vindex);
+  _last_eindex = _root_eindex;
+}
+
+edge_loop_builder_t::edge_loop_builder_t(mesh_t& mesh, edge_index_t root_eindex)
+  : mesh_modifier_t(mesh)
+  , _root_eindex(root_eindex)
+  , _last_eindex(root_eindex)
+{}
+
+bool edge_loop_builder_t::add_point(point_index_t next_pindex) {
+  if (!_last_eindex) return false;
+  auto vindex = make_vertex(next_pindex);
+  _last_eindex = make_edge(vindex, _last_eindex);
+  return true;
+}
+
+edge_index_t edge_loop_builder_t::close()  {
+  connect_edges(_last_eindex, _root_eindex);
+  _last_eindex.reset();
+  return _root_eindex;
+}
+
+// edge_loop_builder_t
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
 mesh_t::mesh_t()
   : kernel(new basic_kernel_t, [](kernel_t* k) { delete k; })
 {}
@@ -243,10 +331,42 @@ point_t* mesh_t::point(vertex_index_t vindex) const {
 }
 
 std::pair<point_t*, point_t*> mesh_t::points(edge_index_t eindex) const {
-  auto e = edge(eindex);
-  auto* p0 = e.vertex().point();
-  auto* p1 = e.next().vertex().point();
+  auto* p0 = edge(eindex).vertex().point();
+  auto* p1 = edge(eindex).next().vertex().point();
   return std::make_pair(p0, p1);
+}
+
+face_index_t mesh_t::add_triangle(point_index_t pindex0, point_index_t pindex1, point_index_t pindex3) {
+  edge_loop_builder_t loop(*this, pindex0);
+  loop.add_point(pindex1);
+  loop.add_point(pindex3);
+  auto root_eindex = loop.close();
+  return cap_edge_loop(root_eindex);
+}
+
+face_index_t mesh_t::add_triangle(edge_index_t eindex, point_index_t pindex) {
+  auto adjacent_index = edge(eindex).adjacent().index();
+  edge_loop_builder_t loop(*this, adjacent_index);
+  loop.add_point(edge(eindex).vertex().element()->point_index);
+  loop.add_point(pindex);
+  auto root_eindex = loop.close();
+  return cap_edge_loop(root_eindex);
+}
+
+face_index_t mesh_t::cap_edge_loop(edge_index_t root_eindex) {
+  tag++;
+
+  face_t face;
+  face.edge_index = root_eindex;
+  auto findex = kernel->emplace(std::move(face));
+
+  auto* elem = kernel->get(root_eindex);
+  while( elem && elem->tag != tag ) {
+    elem->tag = tag;
+    elem->face_index = findex;
+    elem = kernel->get(elem->next_index);
+  }
+  return findex;
 }
 
 // mesh_t
@@ -294,30 +414,31 @@ point_t::point_t()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-vertex_fn_t edge_fn_t::vertex() {
+vertex_fn_t edge_fn_t::vertex() const {
   MAKE_VERT_FN(elem->vertex_index)
 }
 
-face_fn_t edge_fn_t::face() {
+face_fn_t edge_fn_t::face() const {
   MAKE_FACE_FN(elem->face_index)
 }
 
-edge_fn_t edge_fn_t::next() {
+edge_fn_t edge_fn_t::next() const {
   MAKE_EDGE_FN(elem->next_index)
 }
 
-edge_fn_t edge_fn_t::prev() {
+edge_fn_t edge_fn_t::prev() const {
   MAKE_EDGE_FN(elem->prev_index)
 }
 
-edge_fn_t edge_fn_t::adjacent() {
+edge_fn_t edge_fn_t::adjacent() const {
   MAKE_EDGE_FN(elem->adjacent_index)
 }
 
 bool edge_fn_t::is_boundary() const {
   auto* edge = element();
   if (edge != nullptr) {
-    if (edge->adjacent_index) {
+    auto adjacent_face = adjacent().face();
+    if (adjacent_face) {
       return false;
     }
   }
@@ -329,11 +450,11 @@ bool edge_fn_t::is_boundary() const {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-edge_fn_t vertex_fn_t::edge() {
+edge_fn_t vertex_fn_t::edge() const {
   MAKE_EDGE_FN(elem->edge_index)
 }
 
-point_t* vertex_fn_t::point() {
+point_t* vertex_fn_t::point() const {
   auto* vert = element();
   return _kernel->get(vert->point_index);
 }
@@ -343,8 +464,12 @@ point_t* vertex_fn_t::point() {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-edge_fn_t face_fn_t::edge() {
+edge_fn_t face_fn_t::edge() const {
   MAKE_EDGE_FN(elem->edge_index)
+}
+
+float face_fn_t::area() const {
+  return 0.f;
 }
 
 // face_fn_t

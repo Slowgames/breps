@@ -47,12 +47,18 @@ struct index_t {
     , generation(g)
   {}
 
+  void reset() {
+    offset = 0;
+    generation = 0;
+  }
+
   bool operator !=(const index_t& other) const {
     return !(*this == other);
   }
   bool operator ==(const index_t& other) const {
     return offset == other.offset && generation == other.generation;
   }
+
   friend bool operator< (const index_t& lhs, const index_t& rhs) {
     return lhs.offset < rhs.offset;
   }
@@ -152,11 +158,11 @@ class edge_fn_t : public element_fn_t<edge_index_t, edge_t> {
 public:
   using element_fn_t::element_fn_t;
 
-  vertex_fn_t vertex();
-  face_fn_t face();
-  edge_fn_t next();
-  edge_fn_t prev();
-  edge_fn_t adjacent();
+  vertex_fn_t vertex() const;
+  face_fn_t face() const;
+  edge_fn_t next() const;
+  edge_fn_t prev() const;
+  edge_fn_t adjacent() const;
 
   bool is_boundary() const;
 };
@@ -165,15 +171,16 @@ class face_fn_t : public element_fn_t<face_index_t, face_t> {
 public:
   using element_fn_t::element_fn_t;
 
-  edge_fn_t edge();
+  edge_fn_t edge() const;
+  float area() const;
 };
 
 class vertex_fn_t : public element_fn_t<vertex_index_t, vertex_t> {
 public:
   using element_fn_t::element_fn_t;
 
-  edge_fn_t edge();
-  point_t* point();
+  edge_fn_t edge() const;
+  point_t* point() const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -211,12 +218,45 @@ public:
   virtual void resolve(vertex_index_t* index, vertex_t** vertex) const = 0;
 };
 
+/**
+ * Provide whatever functions needed to perform basic mesh operations at
+ * a higher level.
+ */
+class mesh_modifier_t {
+protected:
+  mesh_t& _mesh;
+  mesh_modifier_t(mesh_t& mesh);
+
+  vertex_index_t make_vertex(point_index_t pindex);
+  void update_vertex(vertex_index_t vindex, edge_index_t eindex);
+
+  edge_index_t make_edge(vertex_index_t vindex);
+  edge_index_t make_edge(vertex_index_t vindex, edge_index_t prev_eindex);
+  void set_next_edge(edge_index_t prev_eindex, edge_index_t next_eindex);
+  void set_prev_edge(edge_index_t prev_eindex, edge_index_t next_eindex);
+  void connect_edges(edge_index_t prev_eindex, edge_index_t next_eindex);
+};
+
+/**
+ * A simple interface for constructing edge loops originating at the
+ * specified point.
+ */
+class edge_loop_builder_t : public mesh_modifier_t {
+  edge_index_t _root_eindex;
+  edge_index_t _last_eindex;
+public:
+  edge_loop_builder_t(mesh_t& mesh, point_index_t root_pindex);
+  edge_loop_builder_t(mesh_t& mesh, edge_index_t root_eindex);
+  bool add_point(point_index_t next_pindex);
+  edge_index_t close();
+};
 
 /**
    Mesh can do a great deal of work on it's own as long as the kernel implements
    a couple of principle functions related to data storage.
  */
 class mesh_t {
+  uint16_t tag;
 public:
   mesh_t();
   mesh_t(kernel_t::ptr_t&&);
@@ -235,6 +275,11 @@ public:
   point_t* point(vertex_index_t vindex) const;
 
   std::pair<point_t*, point_t*> points(edge_index_t eindex) const;
+
+  face_index_t add_triangle(point_index_t pindex0, point_index_t pindex1, point_index_t pindex3);
+  face_index_t add_triangle(edge_index_t eindex, point_index_t pindex);
+
+  face_index_t cap_edge_loop(edge_index_t root_eindex);
 
   kernel_t::ptr_t kernel;
 };
