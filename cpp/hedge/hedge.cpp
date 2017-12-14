@@ -336,6 +336,19 @@ std::pair<point_t*, point_t*> mesh_t::points(edge_index_t eindex) const {
   return std::make_pair(p0, p1);
 }
 
+point_index_t mesh_t::add_point(float x, float y, float z) {
+  return kernel->emplace(point_t(x, y, z));
+}
+
+edge_index_t mesh_t::add_edge(point_index_t pindex0, point_index_t pindex1) {
+  vertex_t v0, v1;
+  v0.point_index = pindex0;
+  v1.point_index = pindex1;
+
+  auto vindex0 = kernel->emplace(std::move(v0));
+  auto vindex1 = kernel->emplace(std::move(v1));
+}
+
 face_index_t mesh_t::add_triangle(point_t p0, point_t p1, point_t p2) {
   auto pindex0 = kernel->emplace(std::move(p0));
   auto pindex1 = kernel->emplace(std::move(p1));

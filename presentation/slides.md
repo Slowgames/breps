@@ -88,9 +88,7 @@ Tetrahedral mesh <!-- .element: class="fragment fade-up" -->
 
 <image src="00-edge.jpg" style="height: 400px">
 
-<span class="fragment">Let's build a small library for manifold meshes.</span>
-
-<span class="fragment">But first we'll walk through some essentials in psuedo-c++</span>
+<span class="fragment">First a tour through an imaginary C++ API.</span>
 
 ---
 
@@ -108,7 +106,7 @@ struct edge_t {
 };
 ```
 
-<small>As you may have guessed, the edge is our primary adjacency structure.<br>It is our means for traversing a mesh in a meaningful way.</small>
+<small>The edge is our primary adjacency structure. <br>It is a switch board for fast mesh traversals.</small>
 
 ---
 
@@ -161,8 +159,6 @@ struct point_t {
 
 <image src="00-triangle.jpg" style="height: 400px">
 
-<small>Let's quickly explore how to circulate a face.</small>
-
 ---
 
 <!-- .slide: data-background="mesh.png" -->
@@ -171,7 +167,7 @@ struct point_t {
 
 <image src="01-traversal-01.jpg" style="height: 400px">
 
-<small>Ignoring some details, let's start from the face and move to the first edge.</small>
+<small>Given a face, move to the root of the edge loop:</small>
 
 ```cpp
 edge_t* edge = face->edge;
@@ -185,19 +181,21 @@ edge_t* edge = face->edge;
 
 <image src="01-traversal-02.jpg" style="height: 400px">
 
-<small>Next we travel to the next edge in the loop.</small>
+<small>From there we travel to the next edge:</small>
 
 ```cpp
 edge = edge->next;
 ```
 
+<span class="fragment">Armed with this visualization in mind let's pseudo-code two fundamental calculations...</span>
+
 ---
 
 <!-- .slide: data-background="mesh.png" -->
 
-## Anatomy of a triangle
+## Vertex Normals
 
-Knowing what we know now, let's calculate the normal for a vertex:
+Use the cross product of it's connected edges:
 
 ```cpp
 vec3 calc_normal(vertex_t* vert) {
@@ -219,9 +217,9 @@ auto normal = calc_normal(face->edge->vertex);
 
 <!-- .slide: data-background="mesh.png" -->
 
-## Anatomy of a triangle
+## Area of the triangle
 
-Calculating the area is almost the idential operation:
+Nearly identical to the normal calculation:
 
 ```cpp
 float calc_area(vertex_t* vert) {
@@ -250,22 +248,23 @@ Madness!!!
 </h1>
 
 <span class="fragment">
-Our half-edge mesh library could provide iterators and circulators to allow application developers to easily traverse meshes and accumulate values.
+Our half-edge mesh library should provide iterators and circulators that allow application developers to easily traverse meshes and accumulate values.
 </span>
 
 ---
 
 <!-- .slide: data-background="mesh.png" -->
 
-### Iterate over components of a face
+### Face Normals
 
-<small>The face number could be the average of all vertex normals.</small>
+<small>The face normal is the average of all vertex normals.</small>
 
 ```cpp
 vec3 normal;
 int vert_total = 1;
 for (auto* vert : mesh.iter_verts()) {
 	normal += calc_normal(vert);
+	++vert_total;
 }
 normal = normal / vert_total;
 ```
@@ -274,43 +273,155 @@ normal = normal / vert_total;
 
 <!-- .slide: data-background="mesh.png" -->
 
-### Iterate over components of a face
+### Area of an n-gon
 
-Something is fishy with that area calculation though.
-
-<span class="fragment current-visible">
-Seems you'll end up with overlapping regions being factored into the area.
-</span>
-
-<span class="fragment current-visible">
-So you can't just iterate over every edge in the face to make that calculation.
-</span>
+Calculating the area of a polygon is a bit trickier.
 
 ---
 
 <!-- .slide: data-background="mesh.png" -->
 
-### Iterate over components of a face
+### Area of an n-gon
 
-You could build a suite of iterators for these cases. Let's just use a while loop for now:
+You can't just iterate over every vert in the face to make that calculation because you'll end up with overlapping regions.<br>
+<image src="03-area-04.jpg" style="height: 300px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+Instead you have to fan out over the implicit triangulation of the polygon.<br>
+<image src="03-area-05.jpg" style="height: 300px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+Which means we need to also modify our area calculation:
 
 ```cpp
-edge_t* edge = face->edge;
-while ()
+float calc_area(point_t* p0, point_t* p1, point_t* p2) {
+	auto A = p1->position - p0->position;
+	auto B = p2->position - p0->position;
+
+	return A.cross(B).length() / 2;
+}
 ```
 
 ---
 
-## Intergalactic Interconnections
+<!-- .slide: data-background="mesh.png" -->
 
-You can link between slides internally, [like this](#/2/3).
+### Area of an n-gon
+
+Sum the areas of the triangles to get the total area:
+
+```cpp
+vert_t* next_vert(vert_t* vert) {
+	return vert->edge->next->vertex;
+}
+
+float area = 0.f;
+vert_t* v0 = face->edge->vertex;
+vert_t* v1 = next_vert(v0);
+vert_t* v2 = next_vert(v1);
+while(v2 != v0) {
+	area += calc_area(v0->point, v1->point, v2->point);
+	v1 = v2;
+	v2 = next_vert(v1);
+}
+```
 
 ---
 
-## Speaker View
+<!-- .slide: data-background="mesh.png" -->
 
-There's a [speaker view](https://github.com/hakimel/reveal.js#speaker-notes). It includes a timer, preview of the upcoming slide as well as your speaker notes.
+### Area of an n-gon
 
-Press the _S_ key to try it out.
+<image src="03-area-01.jpg" style="height: 400px">
 
-<aside class="notes">Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).</aside>
+A<sup>0</sup> = *area*(v<sup>0</sup>, v<sup>1</sup>, v<sup>2</sup>)
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+<image src="03-area-02.jpg" style="height: 400px">
+
+A<sup>1</sup> = *area*(v<sup>0</sup>, v<sup>2</sup>, v<sup>3</sup>)
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+<image src="03-area-03.jpg" style="height: 400px">
+
+A<sup>2</sup> = *area*(v<sup>0</sup>, v<sup>3</sup>, v<sup>4</sup>)
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+## What about CONVEX polygons!?
+
+<image src="03-convex-area-01.jpg" style="height: 400px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+No problem!
+
+<image src="the_hoff.jpg" style="height: 400px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+<image src="03-convex-area-02.jpg" style="height: 400px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+<image src="03-convex-area-03.jpg" style="height: 400px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+<image src="03-convex-area-04.jpg" style="height: 400px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+<image src="03-convex-area-05.jpg" style="height: 400px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Area of an n-gon
+
+<image src="no_problem.jpg" style="height: 400px">

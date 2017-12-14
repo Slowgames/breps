@@ -275,6 +275,9 @@ public:
 
   std::pair<point_t*, point_t*> points(edge_index_t eindex) const;
 
+  point_index_t add_point(float x, float y, float z);
+  edge_index_t add_edge(point_index_t p0, point_index_t p1);
+
   face_index_t add_triangle(point_t p0, point_t p1, point_t p2);
   face_index_t add_triangle(point_index_t pindex0, point_index_t pindex1, point_index_t pindex3);
   face_index_t add_triangle(edge_index_t eindex, point_index_t pindex);
