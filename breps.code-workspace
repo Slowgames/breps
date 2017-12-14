@@ -30,7 +30,13 @@
 			"stack": "cpp",
 			"deque": "cpp",
 			"list": "cpp",
-			"xstring": "cpp"
+			"xstring": "cpp",
+			"map": "cpp",
+			"set": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"xhash": "cpp",
+			"xtree": "cpp"
 		}
 	}
 }
