@@ -208,7 +208,7 @@ Use the cross product of it's connected edges:
 ```cpp
 vec3 calc_normal(vertex_t* vert) {
 	auto* edge = vert->edge;
-	auto* p0 = edge->vertex->point;
+	auto* p0 = vert->point;
 	auto* p1 = edge->next->vertex->point;
 	auto* p2 = edge->prev->vertex->point;
 
@@ -232,7 +232,7 @@ Nearly identical to the normal calculation:
 ```cpp
 float calc_area(vertex_t* vert) {
 	auto* edge = vert->edge;
-	auto* p0 = edge->vertex->point;
+	auto* p0 = vert->point;
 	auto* p1 = edge->next->vertex->point;
 	auto* p2 = edge->next->next->vertex->point;
 
