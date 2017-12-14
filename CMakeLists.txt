@@ -5,7 +5,6 @@ project(breps)
 include(FeatureSummary)
 
 add_subdirectory(vendor)
-add_subdirectory(hedge)
-add_subdirectory(demos)
+add_subdirectory(cpp)
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
