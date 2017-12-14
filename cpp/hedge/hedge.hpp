@@ -78,6 +78,38 @@ struct face_index_t : public index_t<index_type_t::face> { using index_t::index_
 struct vertex_index_t : public index_t<index_type_t::vertex> { using index_t::index_t; };
 struct point_index_t : public index_t<index_type_t::point> { using index_t::index_t; };
 
+/**
+   The mesh kernel implements/provides the fundamental storage and access operations.
+ */
+class kernel_t {
+public:
+  using ptr_t = std::unique_ptr<kernel_t, void(*)(kernel_t*)>;
+
+  virtual edge_t* get(edge_index_t index) = 0;
+  virtual face_t* get(face_index_t index) = 0;
+  virtual vertex_t* get(vertex_index_t index) = 0;
+  virtual point_t* get(point_index_t index) = 0;
+
+  virtual edge_index_t emplace(edge_t&& edge) = 0;
+  virtual face_index_t emplace(face_t&& face) = 0;
+  virtual vertex_index_t emplace(vertex_t&& vertex) = 0;
+  virtual point_index_t emplace(point_t&& point) = 0;
+
+  virtual void remove(edge_index_t index) = 0;
+  virtual void remove(face_index_t index) = 0;
+  virtual void remove(vertex_index_t index) = 0;
+  virtual void remove(point_index_t index) = 0;
+
+  virtual size_t point_count() const = 0;
+  virtual size_t vertex_count() const = 0;
+  virtual size_t face_count() const = 0;
+  virtual size_t edge_count() const = 0;
+
+  virtual void resolve(edge_index_t* index, edge_t** edge) const = 0;
+  virtual void resolve(face_index_t* index, face_t** face) const = 0;
+  virtual void resolve(point_index_t* index, point_t** point) const = 0;
+  virtual void resolve(vertex_index_t* index, vertex_t** vertex) const = 0;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Our principle element structures.
@@ -186,39 +218,6 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
-   The mesh kernel implements/provides the fundamental storage and access operations.
- */
-class kernel_t {
-public:
-  using ptr_t = std::unique_ptr<kernel_t, void(*)(kernel_t*)>;
-
-  virtual edge_t* get(edge_index_t index) = 0;
-  virtual face_t* get(face_index_t index) = 0;
-  virtual vertex_t* get(vertex_index_t index) = 0;
-  virtual point_t* get(point_index_t index) = 0;
-
-  virtual edge_index_t emplace(edge_t&& edge) = 0;
-  virtual face_index_t emplace(face_t&& face) = 0;
-  virtual vertex_index_t emplace(vertex_t&& vertex) = 0;
-  virtual point_index_t emplace(point_t&& point) = 0;
-
-  virtual void remove(edge_index_t index) = 0;
-  virtual void remove(face_index_t index) = 0;
-  virtual void remove(vertex_index_t index) = 0;
-  virtual void remove(point_index_t index) = 0;
-
-  virtual size_t point_count() const = 0;
-  virtual size_t vertex_count() const = 0;
-  virtual size_t face_count() const = 0;
-  virtual size_t edge_count() const = 0;
-
-  virtual void resolve(edge_index_t* index, edge_t** edge) const = 0;
-  virtual void resolve(face_index_t* index, face_t** face) const = 0;
-  virtual void resolve(point_index_t* index, point_t** point) const = 0;
-  virtual void resolve(vertex_index_t* index, vertex_t** vertex) const = 0;
-};
-
-/**
  * Provide whatever functions needed to perform basic mesh operations at
  * a higher level.
  */
@@ -276,6 +275,7 @@ public:
 
   std::pair<point_t*, point_t*> points(edge_index_t eindex) const;
 
+  face_index_t add_triangle(point_t p0, point_t p1, point_t p2);
   face_index_t add_triangle(point_index_t pindex0, point_index_t pindex1, point_index_t pindex3);
   face_index_t add_triangle(edge_index_t eindex, point_index_t pindex);
 

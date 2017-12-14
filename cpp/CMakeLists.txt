@@ -1,3 +1,3 @@
 
 add_subdirectory(hedge)
-add_subdirectory(demos)
+#add_subdirectory(demos)
