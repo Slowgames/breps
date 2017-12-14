@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <builddir>.build/cppcheck</builddir>
+    <analyze-all-vs-configs>true</analyze-all-vs-configs>
+    <includedir>
+        <dir name="vendor/easyloggingpp/"/>
+        <dir name="vendor/vectorial/include/"/>
+        <dir name="vendor/mathfu/include/"/>
+        <dir name="vendor/catch/"/>
+    </includedir>
+    <paths>
+        <dir name="cpp/hedge"/>
+    </paths>
+    <addons>
+        <addon>threadsafety</addon>
+    </addons>
+    <tools>
+        <tool>clang-tidy</tool>
+    </tools>
+</project>
