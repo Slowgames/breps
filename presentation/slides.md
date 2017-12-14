@@ -18,8 +18,6 @@ highlightTheme: "atom-one-dark"
 
 *"Boundary Representation"* <!-- .element: class="fragment" -->
 
-Meshes are by far the most common representation of surfaces in games. <!-- .element: class="fragment current-visible" -->
-
 A total pain in the ass... <!-- .element: class="fragment fade-up" -->
 
 But well understood. <!-- .element: class="fragment fade-up" -->
@@ -34,15 +32,23 @@ But well understood. <!-- .element: class="fragment fade-up" -->
 
 <image style="height: 200px;" src="convex_hull.jpg"><image style="height: 200px;" src="FEA.jpg">
 
-<span class="fragment">
-	Convex hull generation<br><small>*(collision systems, physics)*</small>
-</span>
+Convex hull generation<br><small>*(collision systems, physics)*</small>
 
-Navigation / Mapping <!-- .element: class="fragment" -->
+Navigation / Mapping
 
-Finite element simulation / analysis <!-- .element: class="fragment" -->
+---
 
-Robotics <!-- .element: class="fragment" -->
+<!-- .slide: data-background="mesh.png" -->
+
+## B-Reps
+
+<large>*More than a graphical tool*</large>
+
+<image style="height: 200px;" src="convex_hull.jpg"><image style="height: 200px;" src="FEA.jpg">
+
+Finite element simulation / analysis
+
+Robotics
 
 ---
 
@@ -50,19 +56,19 @@ Robotics <!-- .element: class="fragment" -->
 
 ## Other common b-reps
 
-Winged edge <!-- .element: class="fragment fade-up" -->
+Winged edge
 
-Quad edge <!-- .element: class="fragment fade-up" -->
+Quad edge
 
-Tetrahedral mesh <!-- .element: class="fragment fade-up" -->
+Tetrahedral mesh
 
-["triangle data structure"](http://sandervanrossen.blogspot.de/2017/09/half-edge-data-structure-considered.html) <!-- .element: class="fragment fade-up" -->
+["triangle data structure"](http://sandervanrossen.blogspot.de/2017/09/half-edge-data-structure-considered.html)
 
 ---
 
 <!-- .slide: data-background="mesh.png" -->
 
-## Quick Vocab Recap
+### Terms that may get thrown around
 
 - Boundary Edge <span class="fragment"><br>*An edge with no neighbor.*</span>
 
@@ -74,7 +80,7 @@ Tetrahedral mesh <!-- .element: class="fragment fade-up" -->
 
 <!-- .slide: data-background="mesh.png" -->
 
-## Quick Vocab Recap
+### Terms that may get thrown around
 
 - Closed Mesh <span class="fragment current-visible"><br>*A mesh with no boundary edges.*</span>
 
@@ -167,8 +173,6 @@ struct point_t {
 
 <image src="01-traversal-01.jpg" style="height: 400px">
 
-<small>Given a face, move to the root of the edge loop:</small>
-
 ```cpp
 edge_t* edge = face->edge;
 ```
@@ -181,13 +185,17 @@ edge_t* edge = face->edge;
 
 <image src="01-traversal-02.jpg" style="height: 400px">
 
-<small>From there we travel to the next edge:</small>
-
 ```cpp
 edge = edge->next;
 ```
 
-<span class="fragment">Armed with this visualization in mind let's pseudo-code two fundamental calculations...</span>
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+## Anatomy of a triangle
+
+Armed with this visualization in mind let's sketch two fundamental calculations...
 
 ---
 
@@ -283,7 +291,7 @@ Calculating the area of a polygon is a bit trickier.
 
 ### Area of an n-gon
 
-You can't just iterate over every vert in the face to make that calculation because you'll end up with overlapping regions.<br>
+You can't just iterate over every vert in the face because you'll end up with overlapping regions.<br>
 <image src="03-area-04.jpg" style="height: 300px">
 
 ---
@@ -292,7 +300,7 @@ You can't just iterate over every vert in the face to make that calculation beca
 
 ### Area of an n-gon
 
-Instead you have to fan out over the implicit triangulation of the polygon.<br>
+Instead you have to fan out over a potential triangulation of the polygon.<br>
 <image src="03-area-05.jpg" style="height: 300px">
 
 ---
@@ -372,7 +380,7 @@ A<sup>2</sup> = *area*(v<sup>0</sup>, v<sup>3</sup>, v<sup>4</sup>)
 
 ### Area of an n-gon
 
-## What about CONVEX polygons!?
+What about CONVEX polygons!?
 
 <image src="03-convex-area-01.jpg" style="height: 400px">
 
