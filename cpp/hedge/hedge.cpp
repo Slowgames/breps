@@ -347,6 +347,18 @@ edge_index_t mesh_t::add_edge(point_index_t pindex0, point_index_t pindex1) {
 
   auto vindex0 = kernel->emplace(std::move(v0));
   auto vindex1 = kernel->emplace(std::move(v1));
+
+  edge_t e0, e1;
+  e0.vertex_index = vindex0;
+  e1.vertex_index = vindex1;
+
+  auto eindex0 = kernel->emplace(std::move(e0));
+  auto eindex1 = kernel->emplace(std::move(e1));
+
+  kernel->get(vindex0)->edge_index = eindex0;
+  kernel->get(vindex1)->edge_index = eindex1;
+
+  return eindex0;
 }
 
 face_index_t mesh_t::add_triangle(point_t p0, point_t p1, point_t p2) {
