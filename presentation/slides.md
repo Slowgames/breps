@@ -18,15 +18,15 @@ highlightTheme: "atom-one-dark"
 
 *"Boundary Representation"* <!-- .element: class="fragment" -->
 
-A total pain in the ass... <!-- .element: class="fragment fade-up" -->
+Polygons, Sub-Ds, NURBS <!-- .element: class="fragment fade-up" -->
 
-But well understood. <!-- .element: class="fragment fade-up" -->
+Limit sets, SDFs, Sparse voxel-octtrees <!-- .element: class="fragment fade-up" -->
 
 ---
 
 <!-- .slide: data-background="mesh.png" -->
 
-## B-Reps
+## Meshes
 
 <large>*More than a graphical tool*</large>
 
@@ -40,7 +40,7 @@ Navigation / Mapping
 
 <!-- .slide: data-background="mesh.png" -->
 
-## B-Reps
+## Meshes
 
 <large>*More than a graphical tool*</large>
 
@@ -54,7 +54,9 @@ Robotics
 
 <!-- .slide: data-background="mesh.png" -->
 
-## Other common b-reps
+## Common Mesh Structures
+
+Half-Edge
 
 Winged edge
 
@@ -94,7 +96,7 @@ Tetrahedral mesh
 
 <image src="00-edge.jpg" style="height: 400px">
 
-<span class="fragment">First a tour through an imaginary C++ API.</span>
+A tour through an imaginary C++ API.
 
 ---
 
@@ -112,7 +114,7 @@ struct edge_t {
 };
 ```
 
-<small>The edge is our primary adjacency structure. <br>It is a switch board for fast mesh traversals.</small>
+<small>The edge is our primary adjacency structure. <br>It is a hub for fast mesh traversals.</small>
 
 ---
 
@@ -520,7 +522,7 @@ Supporting manifold meshes with no limit on polygon order.
 
 - Function sets: Proxies over elements and the mesh kernel.
 
-- Typesafe Indexes: Index types that constrain indices returned from being used for other element types.
+- Typesafe Indices: Index types that constrain indices returned from being used for other element types.
 
 ---
 
