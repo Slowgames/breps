@@ -82,7 +82,7 @@ Tetrahedral mesh
 
 ### Terms that may get thrown around
 
-- Closed Mesh <span class="fragment current-visible"><br>*A mesh with no boundary edges.*</span>
+- Closed Mesh <span class="fragment"><br>*A mesh with no boundary edges.*</span>
 
 - Manifold Mesh <span class="fragment"><br>*A mesh with no singular edges.*</span>
 
@@ -256,8 +256,44 @@ Madness!!!
 </h1>
 
 <span class="fragment">
-Our half-edge mesh library should provide iterators and circulators that allow application developers to easily traverse meshes and accumulate values.
+Our half-edge mesh library should provide iterators and circulators for common traversals.
 </span>
+
+<span class="fragment">
+For some algorithms, you'll still want to be able to traverse with while and for loops though.
+</span>
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Circu-wha?
+
+How do I iterate over all of the out-going edges from a point?
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Circu-wha?
+
+<image src="04-circulator-01.jpg" style="height: 300px">
+
+```cpp
+auto* edge = vert->edge;
+```
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Circu-wha?
+
+<image src="04-circulator-02.jpg" style="height: 300px">
+
+```cpp
+edge = edge->prev->adjacent;
+```
 
 ---
 
@@ -433,3 +469,214 @@ No problem!
 ### Area of an n-gon
 
 <image src="no_problem.jpg" style="height: 400px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### What's the catch?
+
+Mesh implementations have to take a lot into consideration:
+
+- What sort of geometry do you want to support? <!-- .element: class="fragment" -->
+
+- How can my iterators be robust in the face of non-compliant topology? <!-- .element: class="fragment" -->
+
+- What comes first: the vertex or the edge? <!-- .element: class="fragment" -->
+<br><small>This is a highly cyclical structure</small>
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### What's the catch?
+
+Mesh implementations have to take a lot into consideration:
+
+- What happens when you remove elements? <!-- .element: class="fragment" -->
+
+- Will you support multi-threaded mutability? <!-- .element: class="fragment" -->
+<br><small>:screaming:</small>
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### An example implementation in C++
+
+https://github.com/photex/breps
+
+Supporting manifold meshes with no limit on polygon order.
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Library concepts
+
+- Mesh: Top level container and access to elements
+
+- Mesh Kernel: Fundamental storage interface.
+
+- Function sets: Proxies over elements and the mesh kernel.
+
+- Typesafe Indexes: Index types that constrain indices returned from being used for other element types.
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Typesafe indices
+
+Pointers are fine for illustration.
+
+In practice this is a minefield. <!-- .element: class="fragment" -->
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Typesafe indices
+
+Use a struct to wrap the offset into a buffer, and the cell generation.
+
+```cpp
+enum class index_type_t : unsigned char {
+  vertex, edge, face, point, unsupported
+};
+template<index_type_t TIndexType = index_type_t::unsupported>
+struct index_t {
+  offset_t offset;
+  generation_t generation;
+}
+```
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Typesafe indices
+
+```cpp
+struct edge_index_t : public index_t<index_type_t::edge>
+{ using index_t::index_t; };
+
+struct face_index_t : public index_t<index_type_t::face>
+{ using index_t::index_t; };
+
+struct vertex_index_t : public index_t<index_type_t::vertex>
+{ using index_t::index_t; };
+
+struct point_index_t : public index_t<index_type_t::point>
+{ using index_t::index_t; };
+```
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Base type for all elements
+
+```cpp
+enum class element_status_t : uint16_t {
+  ACTIVE = 0x0000,
+  INACTIVE = 0x8000
+};
+
+struct element_t {
+  element_status_t status; // Was this cell "removed"?
+  uint16_t tag;            // Used by iterators
+  uint32_t generation;     // Generation of the cell
+};
+```
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### "Function Sets" for fluent traversals
+
+When you don't store pointers you lose some of the ease of traversal as seen in our examples.
+
+Instead we can provide objects to act as proxies:
+
+```cpp
+mesh.edge(eindex0).next().vertex().point();
+mesh.face(findex0).edge().next().next().vertex().point();
+mesh.vertex(vindex0).edge().prev().adjacent();
+```
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Removing elements
+
+Mark the cell as inactive and insert the index into a priority queue for re-use.
+
+```cpp
+mesh.kernel->remove(findex0);
+assert(mesh.kernel->get(findex0) == nullptr);
+
+auto findex1 = mesh.kernel->emplace(face_t {});
+assert(findex1.offset == findex0.offset);
+assert(findex1.generation > findex0.generation);
+```
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Building a triangle
+
+```cpp
+auto pindex0 = mesh.add_point(0.f, 0.f, 0.f);
+auto pindex1 = mesh.add_point(1.f, 0.f, 0.f);
+auto pindex2 = mesh.add_point(0.f, 1.f, 0.f);
+```
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Building a triangle
+
+```cpp
+auto findex0 = mesh.add_triangle(pindex0, pindex1, pindex2);
+```
+
+<image src="02-add_triangle-01.jpg" style="height: 300px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Building a triangle
+
+```cpp
+auto pindex3 = mesh.add_point(1.f, 1.f, 0.f);
+```
+
+<image src="02-add_triangle-02.jpg" style="height: 300px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Building a triangle
+
+```cpp
+auto adjacent_eindex =
+  mesh.face(findex0).edge().next().adjacent().index();
+auto findex1 = mesh.add_triangle(adjacent_eindex, pindex3);
+```
+
+<image src="02-add_triangle-04.jpg" style="height: 300px">
+
+---
+
+<!-- .slide: data-background="mesh.png" -->
+
+### Show me some code!
+
+#### Good time for questions :D
