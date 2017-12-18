@@ -282,7 +282,7 @@ public:
   face_index_t add_triangle(point_index_t pindex0, point_index_t pindex1, point_index_t pindex3);
   face_index_t add_triangle(edge_index_t eindex, point_index_t pindex);
 
-  face_index_t cap_edge_loop(edge_index_t root_eindex);
+  face_index_t add_face(edge_index_t root_eindex);
 
   kernel_t::ptr_t kernel;
 };

@@ -373,7 +373,7 @@ face_index_t mesh_t::add_triangle(point_index_t pindex0, point_index_t pindex1, 
   loop.add_point(pindex1);
   loop.add_point(pindex3);
   auto root_eindex = loop.close();
-  return cap_edge_loop(root_eindex);
+  return add_face(root_eindex);
 }
 
 face_index_t mesh_t::add_triangle(edge_index_t eindex, point_index_t pindex) {
@@ -382,10 +382,10 @@ face_index_t mesh_t::add_triangle(edge_index_t eindex, point_index_t pindex) {
   loop.add_point(edge(eindex).vertex().element()->point_index);
   loop.add_point(pindex);
   auto root_eindex = loop.close();
-  return cap_edge_loop(root_eindex);
+  return add_face(root_eindex);
 }
 
-face_index_t mesh_t::cap_edge_loop(edge_index_t root_eindex) {
+face_index_t mesh_t::add_face(edge_index_t root_eindex) {
   tag++;
 
   face_t face;
